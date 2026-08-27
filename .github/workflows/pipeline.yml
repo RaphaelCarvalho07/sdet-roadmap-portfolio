@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write # Required for peaceiris/actions-gh-pages to push to gh-pages branch
 
+defaults:
+  run:
+    working-directory: sdet-web-playwright
+
+
 jobs:
   lint:
     name: 🔍 Run Linter Check
@@ -56,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: k6-summary-report
-          path: summary.html
+          path: sdet-web-playwright/summary.html
           retention-days: 1
 
   api-tests:
@@ -94,7 +99,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: blob-report-api
-          path: blob-report/
+          path: sdet-web-playwright/blob-report/
           retention-days: 1
 
   ui-tests:
@@ -144,7 +149,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: blob-report-ui
-          path: blob-report/
+          path: sdet-web-playwright/blob-report/
           retention-days: 1
 
   publish-report:
@@ -169,19 +174,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: blob-report-api
-          path: blob-report-api
+          path: sdet-web-playwright/blob-report-api
 
       - name: 📥 Download UI blob report
         uses: actions/download-artifact@v4
         with:
           name: blob-report-ui
-          path: blob-report-ui
+          path: sdet-web-playwright/blob-report-ui
 
       - name: 📥 Download Performance HTML report
         uses: actions/download-artifact@v4
         with:
           name: k6-summary-report
-          path: k6-summary-report
+          path: sdet-web-playwright/k6-summary-report
 
       - name: 🔀 Merge Reports
         run: |
@@ -194,7 +199,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: sdet-web-playwright/playwright-report/
           retention-days: 7
 
       - name: 🚀 Deploy to GitHub Pages
@@ -202,7 +207,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./playwright-report
+          publish_dir: ./sdet-web-playwright/playwright-report
           user_name: "github-actions[bot]"
           user_email: "github-actions[bot]@users.noreply.github.com"
 
@@ -210,6 +215,6 @@ jobs:
         if: success() || failure() # Mostra o link mesmo se os testes falharem
         run: |
           echo "### 📊 Automation Reports Dashboard is Live!" >> $GITHUB_STEP_SUMMARY
-          echo "👉 [Click here to view the E2E HTML Report](https://raphaelcarvalho07.github.io/sdet-roadmap-playwright/)" >> $GITHUB_STEP_SUMMARY
-          echo "⚡ [Click here to view the K6 Performance Report](https://raphaelcarvalho07.github.io/sdet-roadmap-playwright/k6-report.html)" >> $GITHUB_STEP_SUMMARY
+          echo "👉 [Click here to view the E2E HTML Report](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/)" >> $GITHUB_STEP_SUMMARY
+          echo "⚡ [Click here to view the K6 Performance Report](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/k6-report.html)" >> $GITHUB_STEP_SUMMARY
 

@@ -1,0 +1,18 @@
+# Ignore local dependencies and caches
+node_modules/
+.npm/
+.vscode/
+.auth
+
+# Ignore local environment variables (The container will get them later)
+.env
+
+# Ignore version control systems
+.git/
+.gitignore
+
+# Ignore local test reports and temporary artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.local-browsers/

@@ -1,0 +1,37 @@
+{
+  "name": "sdet-roadmap-playwright",
+  "version": "1.0.0",
+  "description": "Pragmatic roadmap and technical implementation for transitioning from QA Automation to Software Development Engineer in Test (SDET) using TypeScript and Playwright.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint . --ext .ts",
+    "test": "playwright test",
+    "test:api": "playwright test --project=api-tests",
+    "test:ui": "npx playwright test --project=ui-tests-chrome",
+    "test:ui:visual": "npx playwright test --ui --project=ui-tests-chrome",
+    "test:ui:crossbrowser": "playwright test --project=ui-tests-chrome --project=ui-tests-firefox --project=ui-tests-webkit",
+    "report": "npx playwright show-report",
+    "docker:start": "docker info >/dev/null 2>&1 || (open -a Docker && echo \"Aguardando o Docker Desktop iniciar...\" && until docker info >/dev/null 2>&1; do sleep 1; done); docker start juice-shop 2>/dev/null || docker run -d --name juice-shop -p 3000:3000 bkimminich/juice-shop",
+    "docker:stop": "docker stop juice-shop",
+    "docker:logs": "docker logs -f juice-shop",
+    "test:perf:load": "k6 run tests/performance/search-load-test.js",
+    "test:perf:stress": "k6 run tests/performance/login-stress-test.js",
+    "test:perf:flow": "k6 run tests/performance/shopping-flow-test.js"
+  },
+  "keywords": [],
+  "author": "Raphael 'Rapha' Carvalho",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@faker-js/faker": "^10.5.0",
+    "@playwright/test": "^1.61.0",
+    "@types/node": "^26.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.62.0",
+    "dotenv": "^17.4.2",
+    "eslint": "^10.5.0",
+    "eslint-plugin-playwright": "^2.10.4",
+    "prettier": "^3.8.4",
+    "typescript-eslint": "^8.62.0",
+    "zod": "^4.4.3"
+  }
+}
