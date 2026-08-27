@@ -111,9 +111,9 @@ The initial GitHub Actions pipeline (`pipeline.yml`) ran all tests sequentially,
 
 We developed a high-efficiency restructuring in the CI/CD pipeline:
 
-- **Container Synchronization:** Updated the [Dockerfile](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/Dockerfile) to sync with the official `playwright:v1.61.0-noble` image.
-- **Mapping Correction:** Adjusted the `test:ui:crossbrowser` script in [package.json](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/package.json) to mirror the exact definitions of `playwright.config.ts`.
-- **Parallel Execution Jobs (Split API & UI):** We created distinct asynchronous jobs in [.github/workflows/pipeline.yml](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/.github/workflows/pipeline.yml):
+- **Container Synchronization:** Updated the [Dockerfile](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/Dockerfile) to sync with the official `playwright:v1.61.0-noble` image.
+- **Mapping Correction:** Adjusted the `test:ui:crossbrowser` script in [package.json](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/package.json) to mirror the exact definitions of `playwright.config.ts`.
+- **Parallel Execution Jobs (Split API & UI):** We created distinct asynchronous jobs in [.github/workflows/pipeline.yml](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/.github/workflows/pipeline.yml):
   - API test job without the overhead of browser installation.
   - UI test job installing dependencies required only for its scope.
 - **Report Consolidation via Blob Merge:** Both test jobs generate lightweight binary blob reports (`--reporter=blob`), which are combined in a final job executing `npx playwright merge-reports`.
@@ -141,10 +141,10 @@ The goal was to automate the checkout flow of the SauceDemo UI application and i
 
 We designed a decoupled architecture containing the following components:
 
-- **Type Interfaces:** Defined `CheckoutPayload` type inside [checkout.types.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/types/checkout.types.ts) to enforce a strong billing data contract.
-- **Page Object Model (POM):** Created [CheckoutPage.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/pages/CheckoutPage.ts) encapsulating locators (`getByTestId`), navigation transitions, and form validation assertions (`validateErrorMessage` and `validateCheckoutComplete`).
-- **Fixture Registration:** Extended the Playwright test runner in [baseTest.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/fixtures/baseTest.ts) to automatically inject `checkoutPage` into tests, avoiding manual instantiation.
-- **Object Mother Pattern:** Implemented [checkoutFactory.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/factories/checkoutFactory.ts) using dynamic imports of `@faker-js/faker` to prevent module conflicts. The factory offers specific pre-configured object states for tests:
+- **Type Interfaces:** Defined `CheckoutPayload` type inside [checkout.types.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/types/checkout.types.ts) to enforce a strong billing data contract.
+- **Page Object Model (POM):** Created [CheckoutPage.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/pages/CheckoutPage.ts) encapsulating locators (`getByTestId`), navigation transitions, and form validation assertions (`validateErrorMessage` and `validateCheckoutComplete`).
+- **Fixture Registration:** Extended the Playwright test runner in [baseTest.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/fixtures/baseTest.ts) to automatically inject `checkoutPage` into tests, avoiding manual instantiation.
+- **Object Mother Pattern:** Implemented [checkoutFactory.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/factories/checkoutFactory.ts) using dynamic imports of `@faker-js/faker` to prevent module conflicts. The factory offers specific pre-configured object states for tests:
 
   ```ts
   export class CheckoutFactory {
@@ -165,7 +165,7 @@ We designed a decoupled architecture containing the following components:
   }
   ```
 
-- **Test Scenarios:** Created [checkout.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/tests/ui/checkout.spec.ts) executing positive (successful purchase) and negative (validation failure) checkout scenarios leveraging auth bypass and the Object Mother data states.
+- **Test Scenarios:** Created [checkout.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/tests/ui/checkout.spec.ts) executing positive (successful purchase) and negative (validation failure) checkout scenarios leveraging auth bypass and the Object Mother data states.
 
 ### 3. Next Study Steps
 
@@ -188,7 +188,7 @@ We expanded the checkout validation tests to cover all required fields (Last Nam
 
 We refactored the page object and test suite as follows:
 
-- **Regex Boundary Matcher:** In [CheckoutPage.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/pages/CheckoutPage.ts), we updated `validateInputErrorState` to use `/\berror\b/` and introduced the composite method `validateFieldError`:
+- **Regex Boundary Matcher:** In [CheckoutPage.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/pages/CheckoutPage.ts), we updated `validateInputErrorState` to use `/\berror\b/` and introduced the composite method `validateFieldError`:
 
   ```ts
   async validateInputErrorState(fieldName: string): Promise<void> {
@@ -203,7 +203,7 @@ We refactored the page object and test suite as follows:
   }
   ```
 
-- **Data-Driven Loop:** In [checkout.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/tests/ui/checkout.spec.ts), we defined a scenario matrix and iterated over it using a `for...of` loop to dynamically register tests:
+- **Data-Driven Loop:** In [checkout.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/tests/ui/checkout.spec.ts), we defined a scenario matrix and iterated over it using a `for...of` loop to dynamically register tests:
 
   ```ts
   const validationScenarios = [
@@ -265,7 +265,7 @@ We refactored the page object and test suite as follows:
 
 We updated the following files:
 
-- **GitHub Actions Configuration:** Modified [.github/workflows/pipeline.yml](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/.github/workflows/pipeline.yml) across all 4 jobs (`lint`, `api-tests`, `ui-tests`, and `publish-report`) to set `node-version: 22` and added a `📝 Output Pages URL to Job Summary` step to output the live report link directly to the run summary for enhanced developer experience.
+- **GitHub Actions Configuration:** Modified [.github/workflows/pipeline.yml](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/.github/workflows/pipeline.yml) across all 4 jobs (`lint`, `api-tests`, `ui-tests`, and `publish-report`) to set `node-version: 22` and added a `📝 Output Pages URL to Job Summary` step to output the live report link directly to the run summary for enhanced developer experience.
 - **SMART Goals Framework:** Created [sdet_smart_goals.md](file:///Users/raphaelcarvalho/.gemini/antigravity-ide/brain/a811e423-b909-4864-8f4e-91c6ba5cc971/sdet_smart_goals.md) in the artifacts repository to guide study sprints and candidate application cycles.
 
 ### 3. Next Study Steps
@@ -290,9 +290,9 @@ We updated the following files:
 
 We implemented the following solutions:
 
-- **Zod 4 Schemas:** Created [user.schema.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/schemas/user.schema.ts) grouping validators. Utilized Zod 4 top-level format validators (`z.url()`, `z.email()`) and namespace schema validators (`z.iso.datetime()`).
-- **Dynamic Type Inference:** Refactored [user.types.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/types/user.types.ts) to export types inferred dynamically via `z.infer<typeof schema>`, establishing a single source of truth.
-- **Contract Spec Refactoring:** Updated [user.api.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/tests/api/user.api.spec.ts) replacing manual asserts with `.parse()` validation.
+- **Zod 4 Schemas:** Created [user.schema.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/schemas/user.schema.ts) grouping validators. Utilized Zod 4 top-level format validators (`z.url()`, `z.email()`) and namespace schema validators (`z.iso.datetime()`).
+- **Dynamic Type Inference:** Refactored [user.types.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/types/user.types.ts) to export types inferred dynamically via `z.infer<typeof schema>`, establishing a single source of truth.
+- **Contract Spec Refactoring:** Updated [user.api.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/tests/api/user.api.spec.ts) replacing manual asserts with `.parse()` validation.
 
 ### 3. Next Study Steps
 
@@ -317,10 +317,10 @@ We implemented the following solutions:
 
 We implemented the following architecture changes:
 
-- **Zod 4 Schemas:** Created [user.schema.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/schemas/user.schema.ts) defining strict schemas for Juice Shop registration and JWT authentication responses (`juiceUserRegistrationResponseSchema` and `juiceUserLoginResponseSchema`).
-- **Dynamic Type Inference:** Updated [user.types.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/types/user.types.ts) using `z.infer` to maintain a single source of truth.
-- **Factory & HTTP Client:** Updated [userFactory.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/factories/userFactory.ts) with `@faker-js/faker` generating valid dynamic payloads, and updated [UserClient.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/api/UserClient.ts) targeting `/api/Users/` and `/rest/user/login`.
-- **API Spec Execution:** Updated [user.api.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/tests/api/user.api.spec.ts). Executed suite against local Docker container: **2 passed in 438ms**.
+- **Zod 4 Schemas:** Created [user.schema.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/schemas/user.schema.ts) defining strict schemas for Juice Shop registration and JWT authentication responses (`juiceUserRegistrationResponseSchema` and `juiceUserLoginResponseSchema`).
+- **Dynamic Type Inference:** Updated [user.types.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/types/user.types.ts) using `z.infer` to maintain a single source of truth.
+- **Factory & HTTP Client:** Updated [userFactory.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/factories/userFactory.ts) with `@faker-js/faker` generating valid dynamic payloads, and updated [UserClient.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/api/UserClient.ts) targeting `/api/Users/` and `/rest/user/login`.
+- **API Spec Execution:** Updated [user.api.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/tests/api/user.api.spec.ts). Executed suite against local Docker container: **2 passed in 438ms**.
 
 ### 3. Next Study Steps
 
@@ -344,9 +344,9 @@ We implemented the following architecture changes:
 
 We implemented the following architecture components:
 
-- **Page Object Pattern:** Created [JuiceShopPage.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/pages/JuiceShopPage.ts) encapsulating `injectSessionToken(token)` which sets `token`, `welcomebanner_status: "dismiss"`, and `cookieconsent_status: "dismiss"` in `window.localStorage` before page load.
-- **Custom Playwright Fixtures:** Created [juiceTest.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/src/fixtures/juiceTest.ts) providing `authenticatedUserPage` fixture that registers a user via API, obtains a JWT token, injects session state, and yields a pre-authenticated browser context to tests in milliseconds.
-- **Hybrid E2E Test Suite:** Created [juice-hybrid.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/tests/ui/juice-hybrid.spec.ts). Executed suite across all browsers (Chrome, Firefox, Webkit, API): **5 passed in 3.3s**!
+- **Page Object Pattern:** Created [JuiceShopPage.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/pages/JuiceShopPage.ts) encapsulating `injectSessionToken(token)` which sets `token`, `welcomebanner_status: "dismiss"`, and `cookieconsent_status: "dismiss"` in `window.localStorage` before page load.
+- **Custom Playwright Fixtures:** Created [juiceTest.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/src/fixtures/juiceTest.ts) providing `authenticatedUserPage` fixture that registers a user via API, obtains a JWT token, injects session state, and yields a pre-authenticated browser context to tests in milliseconds.
+- **Hybrid E2E Test Suite:** Created [juice-hybrid.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/tests/ui/juice-hybrid.spec.ts). Executed suite across all browsers (Chrome, Firefox, Webkit, API): **5 passed in 3.3s**!
 
 ### 3. Next Study Steps
 
@@ -487,7 +487,7 @@ We integrated Playwright's visual assertions (`toHaveScreenshot`) into our hybri
 
 - **Dual-Verification Visual Test Strategy:**
   - **Macro-Layout Visual Testing (E2E Page-Level):** Checks the entire checkout review page. Uses dynamic Faker data but injects a temporary CSS rule (`height: 150px !important; overflow: hidden !important;`) on the cards via `addStyleTag` to prevent layout shifts. Masks dynamic card containers.
-  - **Micro-Component Visual Testing (Isolated Element-Level):** Uses a dedicated test spec ([juice-visual.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/tests/ui/juice-visual.spec.ts)) that seeds static, constant data (no Faker) and takes an unmasked screenshot of ONLY the specific element:
+  - **Micro-Component Visual Testing (Isolated Element-Level):** Uses a dedicated test spec ([juice-visual.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/tests/ui/juice-visual.spec.ts)) that seeds static, constant data (no Faker) and takes an unmasked screenshot of ONLY the specific element:
     ```ts
     const addressCard = page
       .locator(".column mat-card")
@@ -500,7 +500,7 @@ We integrated Playwright's visual assertions (`toHaveScreenshot`) into our hybri
     content: "mat-snack-bar-container, .mat-snack-bar-container { display: none !important; }",
   });
   ```
-- **Centralized Snapshot Paths:** Overrode Playwright's default layout by defining `snapshotPathTemplate` inside [playwright.config.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-playwright/blob/main/playwright.config.ts), directing all baseline images to a centralized `tests/snapshots/` directory.
+- **Centralized Snapshot Paths:** Overrode Playwright's default layout by defining `snapshotPathTemplate` inside [playwright.config.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/playwright.config.ts), directing all baseline images to a centralized `tests/snapshots/` directory.
 
 ### 3. Next Study Steps
 
@@ -571,3 +571,93 @@ As we finalized our functional E2E test suites, we transitioned to non-functiona
 - **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Model Context Protocol (MCP) servers.
 
+
+---
+
+## 22/08/2026 - Advanced Performance Engineering: Dynamic Data Seeding & Load Flow Simulation
+
+### 1. Scenario and Technical Challenge
+
+As we advanced our non-functional testing portfolio, we developed a complete transaction-flow performance script simulating checkout operations under load. We faced several dynamic data locks and platform constraints:
+- **Database Concurrency Locks:** Registering static test accounts during parallel virtual user (VU) threads triggered database uniqueness constraint violations and write locks inside the containerized SQLite instance, resulting in high HTTP `500 Internal Server Error` rates.
+- **Depletion of Inventory (Out of Stock):** Parallel execution of checkout flows depleted the limited store inventory, triggering `400 Bad Request` ("out of stock") errors. If the script asserted a strict `200 OK` status, the test run was flagged as failed, skewing the reliability metrics.
+- **Complex JSON Parsing & Token Correlation:** Validating multi-step transactional flows required extracting security tokens and dynamically correlating them across subsequent HTTP requests (Authentication ➡️ Add to Cart ➡️ Set Address ➡️ Set Payment ➡️ Checkout).
+
+### 2. Structured Solution & Recommended Patterns
+
+To address these challenges, we implemented the following solutions:
+- **Dynamic VU Seed-Based Registration:** Replaced hardcoded credentials with a dynamic user generator leveraging native K6 variables (`__VU` and `__ITER` combined with dynamic timestamp offsets) to register unique accounts per thread, eliminating DB locks:
+  ```javascript
+  const uniqueId = `sdet_${__VU}_${__ITER}_${Date.now()}`;
+  ```
+- **Resilient Conditional Assertion Modeling:** Modified assertions to treat `400 Bad Request` (due to stock depletion) as a successful validation of the business rule, preventing false-positive test failures when the API behaves correctly:
+  ```javascript
+  check(response, {
+    'status is 200 or 400': (r) => r.status === 200 || r.status === 400
+  });
+  ```
+- **Custom Trend Timing Correlation:** Introduced custom K6 Trend metrics (`custom_add_to_cart_duration`) to isolate and report specific transaction timings independently of standard page load averages.
+
+### 3. Next Study Steps
+
+- **Mobile Automation (Android & iOS):** Explore Appium integrated with TypeScript/WebdriverIO to maintain our programming stack while testing native apps.
+- **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics.
+
+---
+
+## 25/08/2026 - Portfolio Branding & LinkedIn Optimization
+
+### 1. Scenario and Technical Challenge
+
+With E2E and Performance pipelines fully operational, the challenge was to present the technical achievements as a cohesive, high-impact professional portfolio on LinkedIn:
+- **Visual Presentation Gap:** Sharing text-only links of repositories fails to capture recruiters' attention compared to cohesive, visual branding.
+- **LinkedIn Algorithm Limitations:** LinkedIn heavily depresses the reach of posts containing external links.
+- **Layout Paragraph Truncation:** Standard carriage returns in post drafts get collapsed by the LinkedIn UI, converting structured sections into hard-to-read text walls.
+
+### 2. Structured Solution & Recommended Patterns
+
+We applied branding and algorithmic optimization strategies:
+- **Premium Dark-Theme Thumbnails:** Created consistent, visually stunning dark-mode banners for each Featured card (`playwright_report_thumbnail`, `k6_report_thumbnail`, and `sdet_portfolio_thumbnail`) to make the profile look highly professional at first glance.
+- **Link Demotion Workaround:** Structured posts to share external links in the first comment rather than the post body, successfully preserving organic algorithmic reach.
+- **Double Carriage Return Formatting:** Formatted the "About" (Sobre) description with double line breaks (`\n\n`) to prevent LinkedIn from collapsing spacing.
+
+### 3. Next Study Steps
+
+- **Mobile Automation (Android & iOS):** Explore Appium integrated with TypeScript/WebdriverIO to maintain our programming stack while testing native apps.
+
+---
+
+## 27/08/2026 - Monorepo Restructuring & Native Android Automation
+
+### 1. Scenario and Technical Challenge
+
+Transitioning to native mobile testing required establishing a completely new technology stack (Appium + WebdriverIO) without polluting the existing Playwright workspace, and verifying local hardware automation:
+- **Workspace Coupling (Playwright/Appium):** Co-locating WebdriverIO and Playwright configurations at the root of a single project causes dependency conflicts and configuration pollution.
+- **JDK/Android SDK Infrastructure:** Appium requires a local Java JDK and Android SDK toolchain (like `adb` and `emulator`) to compile and sign test helper packages dynamically inside simulated devices.
+- **Mobile Web Chromedriver Alignment:** Running mobile web tests requires downloading a precise Chromedriver binary version matching the emulator's Chrome browser version, causing flakiness as browser versions update.
+- **GitHub Actions Workspace Scope:** Relocating the Playwright folder breaks existing GHA runners that expect config files at the root level.
+
+### 2. Structured Solution & Recommended Patterns
+
+We implemented a unified Monorepo Portfolio structure and completed native mobile integration:
+- **Monorepo Restructuring:** Restructured the workspace into subdirectories (`sdet-web-playwright` and `sdet-mobile-appium`), preserving full Git history using `git mv` renames, and updated `.github/workflows/pipeline.yml` with `defaults.run.working-directory: sdet-web-playwright` and relative path mappings.
+- **NPM Global Prefix Isolation:** Configured `~/.npm-global` for global npm packages, resolving write permission issues (`EACCES`) on macOS without needing `sudo`.
+- **Active Emulator Orchestration:** Created a custom Android Virtual Device (`medium_phone` running API 36/Android 16 system image) and started it locally.
+- **Native App Capabilities (WDIO):** Downloaded the official WDIO Native Demo `.apk` and configured `wdio.conf.ts` target capabilities by removing `browserName` (bypassing Chromedriver errors) and linking native app activity paths:
+  ```typescript
+  capabilities: [{
+      platformName: 'Android',
+      'appium:deviceName': 'medium_phone',
+      'appium:automationName': 'UiAutomator2',
+      'appium:app': './apps/android.wdio.native.app.v1.0.8.apk',
+      'appium:appWaitActivity': 'com.wdiodemoapp.MainActivity'
+  }]
+  ```
+- **Accessibility ID Locator Strategy:** Wrote a native E2E test utilizing Accessibility ID selectors (`~Login`, `~input-email`) as the cross-platform best practice, achieving a successful test execution in 7.4 seconds.
+
+### 3. Next Study Steps
+
+- **Mobile Page Objects:** Structuring the native app page elements using the Page Object Model (POM) in WebdriverIO.
+- **Gestures Automation:** Writing tests to automate swipes, scrolls, and drag-and-drops.
+- **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
+- **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Context Protocol (MCP) servers.
