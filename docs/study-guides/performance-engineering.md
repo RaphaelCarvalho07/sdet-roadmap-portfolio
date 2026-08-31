@@ -173,3 +173,27 @@ http.post(
   JSON.stringify({ ProductId: productId }),
 );
 ```
+
+
+---
+
+## 7. Advanced Performance Engineering Concepts
+
+When moving beyond basic load testing into advanced performance engineering, SDETs must understand the following concepts:
+
+### A. Advanced Load Modeling
+In production-grade testing, we model load profiles to target specific infrastructure conditions:
+- **Breakpoint Testing:** Dynamically increases the load continuously until the system fails. Unlike stress tests (which verify behavior at a high load), breakpoint testing identifies the *absolute maximum capacity* of the current architecture.
+- **Resilience & Recovery Testing:** Analyzes how the system recovers *after* a catastrophic failure (e.g., does it auto-recover and return to normal latency once load drops, or does it trigger cascading failures, memory exhaustion, or database connection pool locks that require manual intervention?).
+
+### B. Server-Side Telemetry & APM Correlation
+Client-side metrics (latency, error rate, RPS) only show *that* a system is slow. Server-side telemetry shows *why*:
+- **Database Connection Pool Exhaustion:** Databases limit the number of simultaneous active connections. If the pool is saturated, application threads queue up, turning small database delays into massive client-side latency spikes.
+- **Garbage Collection (GC) Overhead:** In managed runtimes (Java Virtual Machine, V8/Node.js, .NET CLR), the runtime periodically pauses execution to reclaim memory. Frequent or long GC pauses (stop-the-world events) degrade latency and cause CPU spikes.
+- **Thread Starvation & Event Loop Lag:** In single-threaded event loops (Node.js) or multi-threaded platforms, blocking operations (like heavy CPU cryptography or sync file I/O) block execution, preventing the runtime from handling incoming network events.
+
+### C. Performance Tuning & Optimization Patterns
+Once bottlenecks are isolated, performance engineers apply standard architectural fixes:
+- **Index Optimization:** Ensuring database queries hit indexes rather than performing full table scans.
+- **Caching Layer (Redis/Memcached):** Offloading read-heavy queries by caching static or semi-static data in-memory.
+- **Load Balancing Algorithms:** Distributing traffic using Round Robin, Least Connections, or IP Hashing to ensure no single server node is saturated while others remain idle.
