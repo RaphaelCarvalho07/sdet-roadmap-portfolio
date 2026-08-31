@@ -1,30 +1,19 @@
-import { expect, $ } from '@wdio/globals'
+import { expect } from "@wdio/globals";
+import LoginScreen from "../pageobjects/login.screen.js";
+import DialogScreen from "../pageobjects/dialog.screen.js";
 
-describe('WDIO Native Demo App - Login Flow', () => {
-    it('should navigate to login tab and submit valid credentials', async () => {
-        // 1. Click on the Login tab in the bottom navigation bar (Accessibility ID selector)
-        const loginTab = await $('~Login')
-        await loginTab.click()
+describe("WDIO Native Demo App - Login Flow", () => {
+  it("should navigate to login tab and submit valid credentials using Page Objects", async () => {
+    // 1. Navigate to the Login screen via the bottom navigation bar
+    await LoginScreen.navigateToLoginTab();
 
-        // 2. Wait for the email input field to be visible on the Login screen
-        const emailInput = await $('~input-email')
-        await emailInput.waitForDisplayed({ timeout: 10000 })
+    // 2. Fill in the credentials and click the Login button
+    await LoginScreen.submitLogin("test@example.com", "SuperPassword123!");
 
-        // 3. Fill in the login form fields
-        await emailInput.setValue('test@example.com')
-        const passwordInput = await $('~input-password')
-        await passwordInput.setValue('SuperPassword123!')
+    // 3. Validate the display of the native success dialog
+    await expect(DialogScreen.dialogTitle).toBeDisplayed();
 
-        // 4. Click the native Login submit button
-        const loginButton = await $('~button-LOGIN')
-        await loginButton.click()
-
-        // 5. Assert that the native Success Dialog alert is displayed
-        const successTitle = await $('android=new UiSelector().text("Success")')
-        await expect(successTitle).toBeDisplayed()
-
-        // 6. Click the OK button on the native dialog to dismiss it
-        const okButton = await $('android=new UiSelector().text("OK")')
-        await okButton.click()
-    })
-})
+    // 4. Close the native dialog
+    await DialogScreen.dismissDialog();
+  });
+});

@@ -13,6 +13,8 @@
     "expect-webdriverio": "^6.0.9"
   },
   "scripts": {
-    "wdio": "wdio run ./wdio.conf.ts"
+    "wdio": "wdio run ./wdio.conf.ts",
+    "emulator:start": "android emulator start medium_phone",
+    "emulator:stop": "adb emu kill"
   }
 }
