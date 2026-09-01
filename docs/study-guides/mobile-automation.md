@@ -110,3 +110,58 @@ android --version
 # Install Android Platform 34, Build Tools, and ARM64 System Image (Emulator OS)
 android sdk install platforms/android-34 build-tools/34.0.0 system-images/android-34/google_apis/arm64-v8a
 ```
+
+
+---
+
+## 7. Mobile Locators Hierarchy (Best Practices)
+
+Unlike web applications that query HTML DOM elements, native mobile testing queries the OS native accessibility and component hierarchy tree. Selecting the correct locator strategy is critical for test speed and stability:
+
+```
+          ▲
+         ╱ ╲       1. Accessibility ID (Top Priority - Cross Platform)
+        ╱ 1 ╲      2. Native OS Selectors (UiAutomator2 / XCUITest)
+       ╱───2──╲    3. Resource ID / Class Name (Use with caution)
+      ╱────3───╲   4. XPath (Anti-pattern - Avoid!)
+     ╱─────4────╲
+```
+
+1. **Accessibility ID (`~selector`):**
+   - *Android:* Maps to `content-description`.
+   - *iOS:* Maps to `accessibilityIdentifier`.
+   - *Best Practice:* Pure cross-platform selector. Uses identical identifiers on both platforms and remains unaffected by visual layout changes.
+2. **Native OS Selectors (`android=...` / `ios=...`):**
+   - Communicates directly with the platform test engine (`UiSelector` in Android, Class Chain/Predicate in iOS). Essential for interacting with native OS alerts and system dialogs without Accessibility IDs.
+3. **Class Name / Resource ID:**
+   - Targets the widget class (`android.widget.EditText`). Prone to index mismatches when multiple widgets share the same class.
+4. **XPath (Mobile Anti-Pattern):**
+   - **Performance Penalty:** Requires Appium to recursively parse and serialize the entire native XML view hierarchy. A single XPath query can take 1 to 3 seconds per element.
+   - **Flakiness:** Highly fragile to slight structural changes in the view hierarchy.
+
+---
+
+## 8. Mobile Page Object Model (Screen Objects Pattern)
+
+In mobile testing, Page Objects are modeled around **Screens** and **Global Navigation Bars / Modals**:
+
+### Key Implementation Rules:
+- **Screen Naming Convention:** Name classes after screens (e.g., `LoginScreen`, `SwipeScreen`, `DialogScreen`) rather than web pages.
+- **Dynamic Getters:** Define element locators as getters (`get inputEmail() { return $('~input-email'); }`). In WebdriverIO, getters return a `ChainablePromiseElement` evaluated dynamically upon access.
+- **Base Screen Helper (`screen.ts`):** Inherits common polling and synchronization methods (e.g., `waitForElement`) strictly typed to accept `ChainablePromiseElement`.
+- **System Dialog Decoupling:** Decouple native system pop-ups and OS dialogs into separate Screen Objects (`dialog.screen.ts`) to promote single-responsibility and cross-test reuse.
+
+---
+
+## 9. Resilient Emulator Lifecycle & Auto-Boot (`onPrepare`)
+
+Enterprise mobile test suites must be autonomous and self-healing, eliminating manual prerequisites before test execution:
+
+### Autonomous Boot in `wdio.conf.ts` (`onPrepare` hook):
+1. **Dynamic Capabilities Inspection:** Reads target device (`appium:deviceName`) directly from the capabilities payload.
+2. **Device Detection:** Queries `adb devices` to check if a live emulator/device is currently connected.
+3. **Detached Process Spawning:** If no device is active, spawns `emulator -avd <name>` in background detached mode (`unref()`).
+4. **Boot Polling:** Continuously polls `adb shell getprop sys.boot_completed` until the Android OS returns `1`, preventing session timeouts and startup race conditions.
+
+### Graceful Shutdown:
+- Use `adb emu kill` (or configured npm script `"emulator:stop"`) to send a safe shutdown signal to the emulator daemon without corrupting AVD disk snapshots.
