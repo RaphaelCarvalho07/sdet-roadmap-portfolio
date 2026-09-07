@@ -165,3 +165,75 @@ Enterprise mobile test suites must be autonomous and self-healing, eliminating m
 
 ### Graceful Shutdown:
 - Use `adb emu kill` (or configured npm script `"emulator:stop"`) to send a safe shutdown signal to the emulator daemon without corrupting AVD disk snapshots.
+
+---
+
+## 10. Advanced Mobile Gestures (W3C Actions API)
+
+### Why W3C Actions API Instead of `touchAction`?
+In Appium 1.x, gestures were executed using `driver.touchAction()`. In modern **Appium 2.x**, `touchAction` is deprecated and removed in favor of the official **W3C WebDriver Actions Specification** (`browser.action('pointer')`).
+- **Standardized**: Works across different drivers (UiAutomator2, XCUITest) using a unified protocol.
+- **Physical Fidelity**: Accurately simulates hardware events (mouse, pen, touch) with acceleration, inertia, and deceleration.
+
+### The Anatomy of a Touch Gesture
+A native swipe gesture requires simulating a human finger touching a capacitive glass screen:
+```
+move (hover above start) ➔ down (finger contacts screen) ➔ pause (register touch/drag) ➔ move (drag across screen) ➔ up (lift finger) ➔ perform()
+```
+
+```typescript
+await driver.action('pointer', {
+    parameters: { pointerType: 'touch' } // Emulates capacitive touchscreen
+})
+    .move({ x: startX, y: startY, duration: 0 })
+    .down({ button: 0 })    // Primary finger contact
+    .pause(100)             // Essential: allows the OS to transition from "tap" to "drag" mode
+    .move({ x: endX, y: endY, duration: 800 })
+    .up({ button: 0 })      // Release finger
+    .perform();             // Dispatch action sequence to Appium server
+```
+
+---
+
+### Device-Agnostic Coordinate Math (Percentages vs Fixed Pixels)
+**Never hardcode pixel values** (e.g., `x: 300, y: 800`). Pixel density and screen aspect ratios differ wildly across devices:
+- A coordinate at `x: 300` might be center screen on a compact phone, but near the edge on a 12-inch tablet or foldable.
+
+**SDET Solution**: Compute coordinates dynamically using viewport ratios via `driver.getWindowRect()`:
+```typescript
+const { width, height } = await driver.getWindowRect();
+
+// Dynamic horizontal swipe (from right 85% to left 15% across center card height at 70%)
+const startX = Math.round(width * 0.85);
+const endX   = Math.round(width * 0.15);
+const posY   = Math.round(height * 0.70);
+```
+
+---
+
+### Native Android Selectors: UiAutomator2 & Accessibility IDs
+1. **Accessibility ID (`$('~element')`)**:
+   - Best practice for both Android (`content-desc`) and iOS (`accessibilityIdentifier`).
+   - Resilient against layout changes and language internationalization.
+2. **UiSelector (`$('android=new UiSelector().textContains(...)')`)**:
+   - Directly triggers Android's native `UiAutomator2` Java API on the device.
+   - Ideal when accessibility labels are missing or when asserting dynamic textual content.
+
+---
+
+### Key Interview Pitfalls & Traps
+
+#### 1. The "Peeking Card" False Positive
+- **Issue**: Modern mobile carousels intentionally display ~10-15% of the next card on the right screen boundary for UX discovery.
+- **Trap**: Calling `isDisplayed()` on Card 2 before swiping can return `true` because its edge is technically rendered in the Android View hierarchy.
+- **Solution**: Always assert against a card completely out of the viewport (e.g., Card 3), verifying absence (`toBe(false)`) prior to swiping, followed by presence (`toBe(true)`) after gesture execution.
+
+#### 2. Sleep Anti-pattern vs Explicit Dynamic Waits
+- **Never use `driver.pause(ms)` in CI/CD pipelines**: Hardcoded sleeps cause flakiness under varying server loads and inflate overall pipeline runtime.
+- **Best Practice**: Use explicit element polling:
+  ```typescript
+  await element.waitForDisplayed({
+      timeout: 5000,
+      timeoutMsg: 'Element was not displayed after gesture completion'
+  });
+  ```

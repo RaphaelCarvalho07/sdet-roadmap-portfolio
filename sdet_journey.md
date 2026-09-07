@@ -698,3 +698,35 @@ We implemented the following solutions:
 - **Carousel & Swipe Screen Testing:** Create `swipe.screen.ts` and automate horizontal card swiping and verification on the WDIO Native Demo app.
 - **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Context Protocol (MCP) servers.
+
+---
+
+## 07/09/2026 - W3C Mobile Gestures & Carousel E2E Testing
+
+### 1. Scenario and Technical Challenge
+
+With our Mobile Page Object Model and self-healing emulator infrastructure operational, we tackled native mobile gesture automation:
+- **Deprecation of Legacy `touchAction`:** Appium 2.x and modern WebDriver specifications officially deprecated `driver.touchAction()` in favor of the W3C Actions API (`browser.action('pointer')`).
+- **Viewport Fragmentation & Coordinate Hardcoding:** Hardcoding fixed pixel coordinates (e.g., `x: 300, y: 800`) causes cross-device test flakiness due to varying screen aspect ratios, densities, and orientations (phones vs. foldables vs. tablets).
+- **The "Peeking Card" Carousel False Positive:** In mobile UX, carousels intentionally display ~10-15% of adjacent cards at the screen boundary. Because the element technically enters the layout tree, `isDisplayed()` can return `true` prematurely, passing tests before a swipe actually occurs.
+- **Sleep Anti-Patterns in CI/CD:** Hardcoded sleeps (`driver.pause(2000)`) introduce dead time and test flakiness under variable CI load.
+
+### 2. Structured Solution & Recommended Patterns
+
+We implemented the following solutions:
+- **W3C Actions Gesture Library ([helpers/gestures.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/helpers/gestures.ts)):**
+  - Created a reusable, device-agnostic gesture helper using `browser.action('pointer', { parameters: { pointerType: 'touch' } })`.
+  - Orchestrated full pointer action sequences: `move (origin)` ➔ `down (finger press)` ➔ `pause (touch registration)` ➔ `move (drag)` ➔ `up (release)` ➔ `perform()`.
+  - Implemented dynamic relative percentage calculations based on `driver.getWindowRect()` (`swipeLeft`, `swipeRight`, `swipeUp`, `swipeDown`), targeting the vertical card center (`y: 0.70`) for robust dragging.
+- **Swipe Screen Object ([swipe.screen.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/pageobjects/swipe.screen.ts)):**
+  - Encapsulated bottom navigation switching (`~Swipe`), native Android header verification (`new UiSelector().text("Swipe horizontal")`), and distinct carousel card locator strategies using `new UiSelector().textContains()`.
+  - Implemented explicit dynamic wait helpers (`waitForThirdCard()`) with custom failure diagnostics.
+- **Resilient Carousel E2E Spec ([swipe.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/specs/swipe.spec.ts)):**
+  - Verified initial state against off-screen elements (asserting Card 1 is visible and Card 3 `JS.FOUNDATION` is strictly `false`).
+  - Executed dual consecutive horizontal swipes and asserted dynamic presence of Card 3, completing the full end-to-end flow in 5.4s without any hard sleeps.
+
+### 3. Next Study Steps
+
+- **Vertical Scrolling & Hidden Elements:** Automate vertical page scrolling to locate and interact with dynamically revealed elements ("Or swipe vertical to find what I'm hiding").
+- **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
+- **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Context Protocol (MCP) servers.
