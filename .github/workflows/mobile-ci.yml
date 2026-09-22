@@ -1,0 +1,53 @@
+name: 📱 Mobile CI Pipeline
+
+on:
+  push:
+    paths:
+      - "sdet-mobile-appium/**"
+      - ".github/workflows/mobile-ci.yml"
+    branches: [main, master]
+  pull_request:
+    paths:
+      - "sdet-mobile-appium/**"
+      - ".github/workflows/mobile-ci.yml"
+    branches: [main, master]
+  workflow_dispatch: # Permite disparar o teste manualmente pelo botão da interface do GitHub
+
+jobs:
+  android-e2e:
+    name: 🤖 Android E2E Tests (Headless Emulator)
+    runs-on: macos-13
+
+    steps:
+      - name: 📁 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 17
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: sdet-mobile-appium/package-lock.json
+
+      - name: 📦 Install Dependencies
+        working-directory: sdet-mobile-appium
+        run: npm ci || npm install
+
+      - name: 🚀 Run Tests on Headless Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          script: |
+            cd sdet-mobile-appium
+            npm test

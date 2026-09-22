@@ -55,7 +55,7 @@ export const config: WebdriverIO.Config = {
       // capabilities for local Appium web tests on an Android Emulator
       platformName: "Android",
       "appium:deviceName": "medium_phone",
-      "appium:platformVersion": "16",
+      // "appium:platformVersion": "16",
       "appium:automationName": "UiAutomator2",
       "appium:app": "./apps/android.wdio.native.app.v1.0.8.apk",
       "appium:appWaitActivity": "com.wdiodemoapp.MainActivity",
