@@ -497,7 +497,8 @@ We integrated Playwright's visual assertions (`toHaveScreenshot`) into our hybri
 - **Hiding Transient UI Elements via CSS Injection:** Injected a global CSS rule during tests to force transient snackbars to remain hidden, eliminating visual flakiness from notifications:
   ```ts
   await page.addStyleTag({
-    content: "mat-snack-bar-container, .mat-snack-bar-container { display: none !important; }",
+    content:
+      "mat-snack-bar-container, .mat-snack-bar-container { display: none !important; }",
   });
   ```
 - **Centralized Snapshot Paths:** Overrode Playwright's default layout by defining `snapshotPathTemplate` inside [playwright.config.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-web-playwright/playwright.config.ts), directing all baseline images to a centralized `tests/snapshots/` directory.
@@ -516,6 +517,7 @@ We integrated Playwright's visual assertions (`toHaveScreenshot`) into our hybri
 ### 1. Scenario and Technical Challenge
 
 As we finalized our production-grade testing suite on GHA (GitHub Actions) CI, we faced several critical network, sandbox, and reporting challenges:
+
 - **Docker Host vs. Container Networking Mismatch:** The API tests run on GHA's host VM, connecting to mapped ports via `localhost:3000`. However, the containerized UI tests must connect to the sibling Juice Shop container via `http://juice-shop:3000` (bridge DNS). Changing the secrets to point directly to `juice-shop:3000` breaks API tests and local macOS host development.
 - **Firefox Sandbox Permissions Error:** Launching Firefox inside the Playwright Docker container on GHA crashed because of user folder profile ownership constraints.
 - **GHA Artifact download-artifact v4 Directory Separation:** In GHA v4, downloading multiple artifacts to a single folder (`all-blobs`) dynamically groups them into separate subfolders named after the artifacts (e.g., `all-blobs/blob-report-api/` and `all-blobs/blob-report-ui/`). Since the Playwright blob reporter generates `.zip` files (e.g. `report-api-tests.zip`), the search command for `*.blob` failed, and `merge-reports` had no inputs to merge, crashing the deployment to GitHub Pages with `ENOENT` on the `playwright-report` folder.
@@ -526,7 +528,8 @@ As we finalized our production-grade testing suite on GHA (GitHub Actions) CI, w
 ### 2. Structured Solution & Recommended Patterns
 
 To address these challenges, we implemented the following infrastructure-level patterns:
-- **Dynamic Bash-Level Environment Routing:** Configured the pipeline to run with `shell: bash` and dynamically override `API_URL` and `UI_URL` to `http://juice-shop:3000` inside GHA *only* if the secrets contain localhost. This decoupled the network configuration logic from the core Playwright typescript code.
+
+- **Dynamic Bash-Level Environment Routing:** Configured the pipeline to run with `shell: bash` and dynamically override `API_URL` and `UI_URL` to `http://juice-shop:3000` inside GHA _only_ if the secrets contain localhost. This decoupled the network configuration logic from the core Playwright typescript code.
 - **Firefox Sandbox Fix:** Injected `HOME: /root` environment variable to initialize Firefox profiles with correct root ownership permissions inside the GHA step.
 - **Artifact Folder Consolidation:** Downloaded the artifacts to separate folders and consolidated the Playwright `.zip` reports using a bash `find` helper to merge files correctly:
   ```bash
@@ -551,13 +554,16 @@ To address these challenges, we implemented the following infrastructure-level p
 ## 21/08/2026 - Non-Functional Performance Engineering & K6 CI/CD Integration
 
 ### 1. Scenario and Technical Challenge
+
 As we finalized our functional E2E test suites, we transitioned to non-functional testing to build a comprehensive quality gate portfolio. The goal was to establish performance testing principles and run automated API load tests as Quality Gates in our CI/CD pipeline:
+
 - **Performance Paradigms:** Moving away from standard functional E2E tests to understand Latency, Throughput (RPS), the "Percentile Trap" (why average response time is a misleading metric compared to p95/p99), and Saturation Bottlenecks.
 - **Third-Party Script Parsing Crash (Goja JS Engine):** Trying to use community-maintained minified JavaScript reporters (`k6-reporter`) triggered `SyntaxError: Unexpected token` inside the K6 Goja-based JS execution engine.
 - **CI/CD Resource Sharing CPU Starvation:** Running high-concurrency stress tests (e.g. 100 VUs) on small shared CI runners (2 CPU, 7GB RAM VMs) triggers client-server resource starvation, causing false-positive SLA failures.
 - **Unified GitHub Pages Dashboard Publishing:** Hosting performance test reports side-by-side with Playwright E2E HTML reports dynamically on GitHub Pages.
 
 ### 2. Structured Solution & Recommended Patterns
+
 - **First-Party Native Web Dashboard Export:** Replaced all third-party external reporting modules with the built-in, first-party Grafana K6 Web Dashboard starting in k6 v0.49.0. By using environment variables `K6_WEB_DASHBOARD=true` and `K6_WEB_DASHBOARD_EXPORT=summary.html`, we generate high-fidelity, interactive HTML dashboards natively without external dependencies, conforming to SecOps best practices.
 - **CI/CD Regression Load Gate Strategy:** Integrated a dedicated `performance-tests` job running on the pipeline parallel to functional testing. We pinned the K6 version (`0.49.0`) using the official `grafana/setup-k6-action@v1` and executed a lightweight, stable load-test (`search-load-test.js` with 20 VUs and 1s sleep pacing) to verify latency SLOs (`p95 < 200ms`) without triggering runner CPU starvation.
 - **Dynamic Artifact Renaming & Publishing:** Downloaded the generated K6 `summary.html` artifact in the final `publish-report` consolidation job, copied it as `k6-report.html` into the Playwright output folder, and deployed it to GitHub Pages:
@@ -567,10 +573,10 @@ As we finalized our functional E2E test suites, we transitioned to non-functiona
   ```
 
 ### 3. Next Study Steps
+
 - **Mobile Automation (Android & iOS):** Explore Appium integrated with TypeScript/WebdriverIO to maintain our programming stack while testing native apps.
 - **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Model Context Protocol (MCP) servers.
-
 
 ---
 
@@ -579,6 +585,7 @@ As we finalized our functional E2E test suites, we transitioned to non-functiona
 ### 1. Scenario and Technical Challenge
 
 As we advanced our non-functional testing portfolio, we developed a complete transaction-flow performance script simulating checkout operations under load. We faced several dynamic data locks and platform constraints:
+
 - **Database Concurrency Locks:** Registering static test accounts during parallel virtual user (VU) threads triggered database uniqueness constraint violations and write locks inside the containerized SQLite instance, resulting in high HTTP `500 Internal Server Error` rates.
 - **Depletion of Inventory (Out of Stock):** Parallel execution of checkout flows depleted the limited store inventory, triggering `400 Bad Request` ("out of stock") errors. If the script asserted a strict `200 OK` status, the test run was flagged as failed, skewing the reliability metrics.
 - **Complex JSON Parsing & Token Correlation:** Validating multi-step transactional flows required extracting security tokens and dynamically correlating them across subsequent HTTP requests (Authentication ➡️ Add to Cart ➡️ Set Address ➡️ Set Payment ➡️ Checkout).
@@ -586,6 +593,7 @@ As we advanced our non-functional testing portfolio, we developed a complete tra
 ### 2. Structured Solution & Recommended Patterns
 
 To address these challenges, we implemented the following solutions:
+
 - **Dynamic VU Seed-Based Registration:** Replaced hardcoded credentials with a dynamic user generator leveraging native K6 variables (`__VU` and `__ITER` combined with dynamic timestamp offsets) to register unique accounts per thread, eliminating DB locks:
   ```javascript
   const uniqueId = `sdet_${__VU}_${__ITER}_${Date.now()}`;
@@ -593,7 +601,7 @@ To address these challenges, we implemented the following solutions:
 - **Resilient Conditional Assertion Modeling:** Modified assertions to treat `400 Bad Request` (due to stock depletion) as a successful validation of the business rule, preventing false-positive test failures when the API behaves correctly:
   ```javascript
   check(response, {
-    'status is 200 or 400': (r) => r.status === 200 || r.status === 400
+    "status is 200 or 400": (r) => r.status === 200 || r.status === 400,
   });
   ```
 - **Custom Trend Timing Correlation:** Introduced custom K6 Trend metrics (`custom_add_to_cart_duration`) to isolate and report specific transaction timings independently of standard page load averages.
@@ -610,6 +618,7 @@ To address these challenges, we implemented the following solutions:
 ### 1. Scenario and Technical Challenge
 
 With E2E and Performance pipelines fully operational, the challenge was to present the technical achievements as a cohesive, high-impact professional portfolio on LinkedIn:
+
 - **Visual Presentation Gap:** Sharing text-only links of repositories fails to capture recruiters' attention compared to cohesive, visual branding.
 - **LinkedIn Algorithm Limitations:** LinkedIn heavily depresses the reach of posts containing external links.
 - **Layout Paragraph Truncation:** Standard carriage returns in post drafts get collapsed by the LinkedIn UI, converting structured sections into hard-to-read text walls.
@@ -617,6 +626,7 @@ With E2E and Performance pipelines fully operational, the challenge was to prese
 ### 2. Structured Solution & Recommended Patterns
 
 We applied branding and algorithmic optimization strategies:
+
 - **Premium Dark-Theme Thumbnails:** Created consistent, visually stunning dark-mode banners for each Featured card (`playwright_report_thumbnail`, `k6_report_thumbnail`, and `sdet_portfolio_thumbnail`) to make the profile look highly professional at first glance.
 - **Link Demotion Workaround:** Structured posts to share external links in the first comment rather than the post body, successfully preserving organic algorithmic reach.
 - **Double Carriage Return Formatting:** Formatted the "About" (Sobre) description with double line breaks (`\n\n`) to prevent LinkedIn from collapsing spacing.
@@ -632,6 +642,7 @@ We applied branding and algorithmic optimization strategies:
 ### 1. Scenario and Technical Challenge
 
 Transitioning to native mobile testing required establishing a completely new technology stack (Appium + WebdriverIO) without polluting the existing Playwright workspace, and verifying local hardware automation:
+
 - **Workspace Coupling (Playwright/Appium):** Co-locating WebdriverIO and Playwright configurations at the root of a single project causes dependency conflicts and configuration pollution.
 - **JDK/Android SDK Infrastructure:** Appium requires a local Java JDK and Android SDK toolchain (like `adb` and `emulator`) to compile and sign test helper packages dynamically inside simulated devices.
 - **Mobile Web Chromedriver Alignment:** Running mobile web tests requires downloading a precise Chromedriver binary version matching the emulator's Chrome browser version, causing flakiness as browser versions update.
@@ -640,18 +651,21 @@ Transitioning to native mobile testing required establishing a completely new te
 ### 2. Structured Solution & Recommended Patterns
 
 We implemented a unified Monorepo Portfolio structure and completed native mobile integration:
+
 - **Monorepo Restructuring:** Restructured the workspace into subdirectories (`sdet-web-playwright` and `sdet-mobile-appium`), preserving full Git history using `git mv` renames, and updated `.github/workflows/pipeline.yml` with `defaults.run.working-directory: sdet-web-playwright` and relative path mappings.
 - **NPM Global Prefix Isolation:** Configured `~/.npm-global` for global npm packages, resolving write permission issues (`EACCES`) on macOS without needing `sudo`.
 - **Active Emulator Orchestration:** Created a custom Android Virtual Device (`medium_phone` running API 36/Android 16 system image) and started it locally.
 - **Native App Capabilities (WDIO):** Downloaded the official WDIO Native Demo `.apk` and configured `wdio.conf.ts` target capabilities by removing `browserName` (bypassing Chromedriver errors) and linking native app activity paths:
   ```typescript
-  capabilities: [{
-      platformName: 'Android',
-      'appium:deviceName': 'medium_phone',
-      'appium:automationName': 'UiAutomator2',
-      'appium:app': './apps/android.wdio.native.app.v1.0.8.apk',
-      'appium:appWaitActivity': 'com.wdiodemoapp.MainActivity'
-  }]
+  capabilities: [
+    {
+      platformName: "Android",
+      "appium:deviceName": "medium_phone",
+      "appium:automationName": "UiAutomator2",
+      "appium:app": "./apps/android.wdio.native.app.v1.0.8.apk",
+      "appium:appWaitActivity": "com.wdiodemoapp.MainActivity",
+    },
+  ];
   ```
 - **Accessibility ID Locator Strategy:** Wrote a native E2E test utilizing Accessibility ID selectors (`~Login`, `~input-email`) as the cross-platform best practice, achieving a successful test execution in 7.4 seconds.
 
@@ -662,7 +676,6 @@ We implemented a unified Monorepo Portfolio structure and completed native mobil
 - **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Context Protocol (MCP) servers.
 
-
 ---
 
 ## 31/08/2026 - Mobile Page Object Model (POM) & Self-Healing Emulator Lifecycle
@@ -670,6 +683,7 @@ We implemented a unified Monorepo Portfolio structure and completed native mobil
 ### 1. Scenario and Technical Challenge
 
 As we deepened our mobile automation stack (Appium + WebdriverIO), we aimed to transition from inline procedural scripts into an enterprise-grade, maintainable testing architecture:
+
 - **Web-to-Mobile POM Paradigm Shift:** Default template files generated by WebdriverIO assume browser-based testing (HTML elements, URLs, `page.open()`). Native mobile testing lacks URLs and relies on Accessibility ID attributes and component hierarchy trees.
 - **Strict TypeScript Typing on Chainable Promises:** WebdriverIO queries return `ChainablePromiseElement` instances. Union typing with resolved `WebdriverIO.Element` triggers internal `parent` property mismatches and TypeScript `'this'` method binding errors.
 - **Manual Emulator Dependency Flakiness:** Running mobile tests locally required manual pre-requisite commands (`android emulator start ...`). If a developer or CI runner executed `npm run wdio` with the emulator closed, Appium threw `WebDriverError: Could not find a connected Android device in 20000ms`, breaking test repeatability.
@@ -677,6 +691,7 @@ As we deepened our mobile automation stack (Appium + WebdriverIO), we aimed to t
 ### 2. Structured Solution & Recommended Patterns
 
 We implemented the following solutions:
+
 - **Mobile Page Object Model Architecture:**
   - **Base Mobile Screen ([screen.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/pageobjects/screen.ts)):** Created an abstract base class providing dynamic wait helpers (`waitForElement`) strictly typed to accept `ChainablePromiseElement`.
   - **Login Screen ([login.screen.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/pageobjects/login.screen.ts)):** Encapsulated bottom navigation tab switching (`~Login`), Accessibility ID getters (`~input-email`, `~input-password`, `~button-LOGIN`), and high-level workflow methods (`navigateToLoginTab`, `submitLogin`).
@@ -706,6 +721,7 @@ We implemented the following solutions:
 ### 1. Scenario and Technical Challenge
 
 With our Mobile Page Object Model and self-healing emulator infrastructure operational, we tackled native mobile gesture automation:
+
 - **Deprecation of Legacy `touchAction`:** Appium 2.x and modern WebDriver specifications officially deprecated `driver.touchAction()` in favor of the W3C Actions API (`browser.action('pointer')`).
 - **Viewport Fragmentation & Coordinate Hardcoding:** Hardcoding fixed pixel coordinates (e.g., `x: 300, y: 800`) causes cross-device test flakiness due to varying screen aspect ratios, densities, and orientations (phones vs. foldables vs. tablets).
 - **The "Peeking Card" Carousel False Positive:** In mobile UX, carousels intentionally display ~10-15% of adjacent cards at the screen boundary. Because the element technically enters the layout tree, `isDisplayed()` can return `true` prematurely, passing tests before a swipe actually occurs.
@@ -714,6 +730,7 @@ With our Mobile Page Object Model and self-healing emulator infrastructure opera
 ### 2. Structured Solution & Recommended Patterns
 
 We implemented the following solutions:
+
 - **W3C Actions Gesture Library ([helpers/gestures.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/helpers/gestures.ts)):**
   - Created a reusable, device-agnostic gesture helper using `browser.action('pointer', { parameters: { pointerType: 'touch' } })`.
   - Orchestrated full pointer action sequences: `move (origin)` ➔ `down (finger press)` ➔ `pause (touch registration)` ➔ `move (drag)` ➔ `up (release)` ➔ `perform()`.
@@ -725,8 +742,123 @@ We implemented the following solutions:
   - Verified initial state against off-screen elements (asserting Card 1 is visible and Card 3 `JS.FOUNDATION` is strictly `false`).
   - Executed dual consecutive horizontal swipes and asserted dynamic presence of Card 3, completing the full end-to-end flow in 5.4s without any hard sleeps.
 
+---
+
+## 16/09/2026 - Mobile Vertical Gestures & Dynamic Viewport Discovery
+
+### 1. Scenario and Technical Challenge
+
+In native mobile test automation (Android & iOS), elements that exist outside the current physical viewport are not rendered in the active Accessibility Tree (`Page Source`). Calling `waitForDisplayed()` or querying an off-screen element directly causes an immediate framework timeout.
+
+Additionally, naive implementations of vertical scrolling often suffer from two major anti-patterns:
+
+- **Unbounded `while` loops:** A naive `while (!element.isDisplayed())` causes CI test deadlocks and hangs the test runner indefinitely when application bugs prevent the target element from rendering.
+- **Heavy XPath Traversal:** Using XPath in mobile requires the underlying driver (UiAutomator2 / XCUITest) to recursively serialize the entire native UI hierarchy into an in-memory XML document on every check, creating significant CPU and execution latency penalties.
+
+### 2. Structured Solution & Recommended Patterns
+
+We implemented a resilient, guardrailed vertical scroll pattern inside our Screen Object architecture and validated it with explicit assertions:
+
+1. **Screen Object Guardrailed Discovery ([test/pageobjects/swipe.screen.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/pageobjects/swipe.screen.ts)):**
+   - Mapped the target element using Android's native `UiSelector` API:
+     ```typescript
+     get hiddenText() {
+       return $('android=new UiSelector().text("You found me!!!")');
+     }
+     ```
+   - Encapsulated the scroll loop with a defensive boundary (`maxScrolls = 5`) to prevent CI runner deadlocks:
+
+     ```typescript
+     async scrollToHiddenText(maxScrolls: number = 5): Promise<void> {
+       let scrolls = 0;
+       while (!(await this.hiddenText.isDisplayed()) && scrolls < maxScrolls) {
+         await Gestures.swipeUp();
+         scrolls++;
+       }
+
+       if (!(await this.hiddenText.isDisplayed())) {
+         throw new Error(`Element was not found after ${maxScrolls} scroll attempts.`);
+       }
+     }
+     ```
+
+2. **Declarative Test Assertion ([test/specs/swipe.spec.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/specs/swipe.spec.ts)):**
+   - Decoupled gesture execution from formal test verification, ensuring full traceability in test reporting frameworks:
+     ```typescript
+     it("should scroll vertically to find hidden element", async () => {
+       await SwipeScreen.scrollToHiddenText();
+       await expect(SwipeScreen.hiddenText).toBeDisplayed();
+       await expect(SwipeScreen.hiddenText).toHaveText("You found me!!!");
+     });
+     ```
+
+3. **Career & Portfolio Alignment:**
+   - Standardized CV to an international 2-page Senior SDET format using Reactive Resume.
+   - Built the GitHub Profile README (`RaphaelCarvalho07/RaphaelCarvalho07`) highlighting engineering principles and multi-platform monorepo architecture.
+
 ### 3. Next Study Steps
 
-- **Vertical Scrolling & Hidden Elements:** Automate vertical page scrolling to locate and interact with dynamically revealed elements ("Or swipe vertical to find what I'm hiding").
 - **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using framework libraries (like Promptfoo or DeepEval), prompt injection security testing (Red Teaming), and writing/testing Model Context Protocol (MCP) servers.
+- **Headless Mobile CI Pipeline:** Configure a GitHub Actions workflow with an Android emulator running headless to execute the mobile test suite on pull requests.
+- **Root-Cause Performance Engineering:** Revisit k6 with server resource monitoring (CPU/memory saturation and breakpoint testing).
+
+---
+
+## 21/09/2026 - Resolving Nested Gesture Conflicts, Framework Concurrency & Log Sanitization
+
+### 1. Scenario and Technical Challenge
+
+During mobile E2E automation with WebdriverIO and Appium 2.x, automating dynamic vertical discovery across nested touch containers revealed two major technical challenges:
+
+1. **Nested Gesture Recognizer Conflict:**
+   The application layout contains a horizontal snapping Carousel (`HorizontalScrollView` / `FlatList`) nested within an outer vertical `ScrollView`. Naive vertical swipes using static middle-screen coordinates (`{ x: 0.5, y: 0.8 }` or `{ x: 0.9, y: 0.8 }`) landed inside the Carousel's bounding box (`[0, 1221][1080, 2113]`). The child gesture listener intercepted the touch event, treating the vertical drag as an aborted horizontal gesture and snapping the Carousel back to Card 1 instead of scrolling the page.
+   Furthermore, an initial swipe above the Carousel caused the entire component tree to shift upwards into the upper viewport, meaning subsequent swipes with identical static coordinates hit the newly positioned Carousel.
+
+2. **Runner Concurrency Collisions & Log Noise:**
+   Running full test suites (`npm test`) on a single local Android emulator with the default `maxInstances: 10` spawned multiple worker processes attempting to control the same device session concurrently, triggering immediate `invalid session id` and socket crashes (`UND_ERR_CLOSED`). Concurrently, WebdriverIO's default `logLevel: "info"` flooded the terminal with verbose JSON-RPC wire protocol calls (`POST /element`, coordinate payloads, polling loops), obscuring test status.
+
+### 2. Structured Solution & Recommended Patterns
+
+We systematically resolved these challenges through architectural refactoring across three layers:
+
+1. **State-Aware W3C Pointer Gestures ([test/pageobjects/swipe.screen.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/test/pageobjects/swipe.screen.ts)):**
+   - Implemented dynamic safe-zone scrolling within the Screen Object:
+     - **Initial Scroll (`scrolls === 0`):** Touches the upper safe zone above the Carousel (`y: 0.35` -> `y: 0.05`) with a 400ms fling duration, shifting the Carousel into the upper viewport.
+     - **Subsequent Scrolls (`scrolls > 0`):** Touches the lower safe zone below the Carousel (`y: 0.80` -> `y: 0.35`), pulling off-screen elements into the active accessibility hierarchy.
+   - Reduced gesture duration from `1000ms` (slow drag without inertia) to `400ms` (fling gesture with natural OS scroll momentum):
+
+     ```typescript
+     async scrollToHiddenText(maxScrolls: number = 5): Promise<void> {
+       let scrolls = 0;
+       while (!(await this.hiddenText.isDisplayed()) && scrolls < maxScrolls) {
+         if (scrolls === 0) {
+           // 1st scroll: Carousel is in lower viewport; swipe in upper safe zone
+           await Gestures.swipe({ x: 0.5, y: 0.35 }, { x: 0.5, y: 0.05 }, 400);
+         } else {
+           // Subsequent scrolls: Carousel moved to top; swipe in lower safe zone
+           await Gestures.swipe({ x: 0.5, y: 0.8 }, { x: 0.5, y: 0.35 }, 400);
+         }
+         scrolls++;
+       }
+
+       if (!(await this.hiddenText.isDisplayed())) {
+         throw new Error(`Element was not found after ${maxScrolls} scroll attempts.`);
+       }
+     }
+     ```
+
+2. **Concurrency & Session Isolation ([wdio.conf.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/wdio.conf.ts)):**
+   - Configured `maxInstances: 1` to ensure sequential test execution across multiple spec files (`swipe.spec.ts` and `test.e2e.ts`) on single-emulator environments, eliminating driver race conditions.
+
+3. **Log Sanitization & Diagnostic Decoupling ([wdio.conf.ts](https://github.com/RaphaelCarvalho07/sdet-roadmap-portfolio/blob/main/sdet-mobile-appium/wdio.conf.ts)):**
+   - Set `logLevel: "warn"` to silence internal wire protocol traffic.
+   - Configured `@wdio/appium-service` to redirect raw Appium server diagnostics to an isolated `appium.log` file, producing clean Spec Reporter output (suite passes in ~9s).
+   - Added `*.log` and `logs/` to root `.gitignore`.
+
+### 3. Next Study Steps
+
+- **Test Observability & Telemetry:** Implement correlation IDs (x-request-id/traceparent), structured JSON logging, and test execution metrics to link automated test runs with APM/backend observability tools (Datadog/Grafana).
+- **Headless Mobile CI Pipeline (GitHub Actions):** Build an automated CI workflow that provisions an Android emulator headless (`-no-window -no-audio -gpu swiftshader_indirect`) and executes the full mobile test suite on pull requests.
+- **Root-Cause Performance Engineering (k6 + Server Telemetry):** Stress testing with correlation metrics (CPU, RAM, latency percentiles under load).
+- **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using Promptfoo/DeepEval, and Model Context Protocol (MCP) testing.

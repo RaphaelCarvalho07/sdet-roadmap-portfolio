@@ -12,3 +12,10 @@ playwright/.local-browsers/
 logs_*/
 all-blobs/
 blob-report-*/
+# Mobile Appium & WebdriverIO logs
+*.log
+logs/
+
+# Mobile Appium & WebdriverIO logs
+*.log
+logs/

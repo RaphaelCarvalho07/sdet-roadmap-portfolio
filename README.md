@@ -1,199 +1,127 @@
-# 🚀 SDET Automation Framework - Hybrid Architecture (UI & API)
+# 🚀 SDET Multi-Platform Automation Portfolio (Web, Mobile, API & Performance)
 
 [![Playwright](https://img.shields.io/badge/Playwright-v1.45+-2e8b57?style=for-the-badge&logo=playwright&logoColor=white)](https://playwright.dev/)
+[![Appium](https://img.shields.io/badge/Appium-v2.x-purple?style=for-the-badge&logo=appium&logoColor=white)](https://appium.io/)
+[![WebdriverIO](https://img.shields.io/badge/WebdriverIO-v9.x-ea5906?style=for-the-badge&logo=webdriverio&logoColor=white)](https://webdriver.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Zod 4](https://img.shields.io/badge/Zod-Schema_Validation-purple?style=for-the-badge&logo=zod&logoColor=white)](https://zod.dev/)
+[![K6](https://img.shields.io/badge/Grafana_K6-Performance-7d4cdb?style=for-the-badge&logo=k6&logoColor=white)](https://k6.io/)
 [![Docker](https://img.shields.io/badge/Docker-Containerized_Env-0db7ed?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-A high-performance, industry-grade test automation framework designed under strict software engineering principles for both UI and API layers. Built using **TypeScript**, **Playwright**, and **Zod**, this repository showcases how to bypass traditional, slow, and flaky UI steps by combining background REST API mutations with state injection.
+An enterprise-grade, monorepo test automation engineering portfolio demonstrating production-level testing architecture across **Web**, **Mobile Native (Android)**, **REST APIs**, and **Performance/Load Engineering**. Built strictly with **TypeScript**, following modern software engineering principles, decoupled layers, and CI/CD quality gates.
 
 ---
 
-## 🏛️ Hybrid Test Architecture Flow
+## 🏛️ Monorepo Architecture Overview
 
-To maximize test execution speed and completely eliminate UI flakiness (such as logging in, navigating complex search grids, and filling multiple forms), this framework adopts a **hybrid automation pattern**:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant API as REST API Backend
-    participant Storage as Browser Storage (LocalStorage/SessionStorage)
-    participant UI as Browser UI (Playwright)
-
-    Note over API: [Arrange Phase]
-    API->>API: Create Dynamic User (Faker)
-    API->>API: Retrieve JWT Token & Basket ID (bid)
-    API->>API: Seed Cart Items, Address, & Payment Card
-    
-    Note over Storage: [Inject Session State]
-    Storage->>Storage: Inject JWT & Session Cookies
-    Storage->>Storage: Inject Basket ID to Local & Session Storage
-    
-    Note over UI: [Act & Assert Phases]
-    UI->>UI: Navigate directly to /#/basket
-    UI->>UI: Go through checkout selection screens (POM)
-    UI->>UI: Place order and assert completion text
-```
-
----
-
-## 📂 Framework Directory Structure
+The repository is divided into isolated subprojects sharing common engineering standards:
 
 ```text
-├── docs/
-│   └── study-guides/         # Theoretical guides & Architecture plans (Mentorship)
-├── src/
-│   ├── api/                  # REST API Clients (Decoupled Layer)
-│   │   ├── AddressClient.ts
-│   │   ├── BasketClient.ts
-│   │   ├── CardClient.ts
-│   │   ├── ProductClient.ts
-│   │   └── UserClient.ts
-│   ├── factories/            # Object Mother / Test Data Generation
-│   │   └── userFactory.ts
-│   ├── fixtures/             # Custom Playwright Fixtures
-│   │   └── juiceTest.ts
-│   ├── pages/                # Page Object Model (POM)
-│   │   └── JuiceShopPage.ts
-│   ├── schemas/              # Zod API Contract Schemas
-│   │   ├── address.schema.ts
-│   │   ├── basket.schema.ts
-│   │   ├── card.schema.ts
-│   │   ├── common.schema.ts  # Shared date formatting validators
-│   │   └── product.schema.ts
-│   └── types/                # Inferred TypeScript Types
-│       ├── address.types.ts
-│       ├── basket.types.ts
-│       ├── card.types.ts
-│       └── product.types.ts
-├── tests/
-│   ├── api/                  # Isolated API Contract & Functional Tests
-│   │   └── user.api.spec.ts
-│   ├── performance/          # Grafana K6 Performance & Stress scripts
-│   │   ├── login-stress-test.js
-│   │   └── search-load-test.js
-│   ├── snapshots/            # Centralized Visual Regression Baseline Images
-│   │   └── *.png
-│   └── ui/                   # UI, Hybrid & Visual Test Specs
-│       ├── juice-checkout.spec.ts
-│       ├── juice-hybrid.spec.ts
-│       └── juice-visual.spec.ts
-├── playwright.config.ts      # Global Test configuration runner
-└── tsconfig.json             # TypeScript compiler rules
+.
+├── sdet-web-playwright/         # Web E2E, REST API Contracts & Performance Subproject
+│   ├── src/
+│   │   ├── api/                 # Decoupled REST API Clients (Axios/Playwright request)
+│   │   ├── factories/           # Dynamic Test Data Generation (Faker / Object Mother)
+│   │   ├── fixtures/            # Custom Playwright Fixtures with Session Injections
+│   │   ├── pages/               # Page Object Model (POM) & Component Objects
+│   │   ├── schemas/             # Zod Runtime Schema Validation & Contract Enforcement
+│   │   └── types/               # Inferred TypeScript Types
+│   ├── tests/
+│   │   ├── api/                 # Isolated API Functional & Contract Specs
+│   │   ├── performance/         # Grafana K6 Stress, Load & Transaction Flows
+│   │   ├── snapshots/           # Centralized Visual Regression Baseline Images
+│   │   └── ui/                  # Web UI, Hybrid & Visual E2E Specs
+│   ├── Dockerfile               # Containerized Environment Definition
+│   └── playwright.config.ts     # Parallel, Multi-Browser Matrix Runner
+│
+├── sdet-mobile-appium/          # Native Mobile Automation Subproject (Android)
+│   ├── apps/                    # Target Native Application APKs
+│   ├── test/
+│   │   ├── helpers/             # W3C Pointer Gestures Utility (Gestures.ts)
+│   │   ├── pageobjects/         # Mobile Screen Objects Model (Screen.ts Base Class)
+│   │   └── specs/               # Native E2E Specs (Login, Dialogs, Horizontal Carousels)
+│   └── wdio.conf.ts             # Appium 2.x Runner with Autonomous Emulator Auto-Boot
+│
+├── docs/                        # Engineering Knowledge Base & Study Guides
+│   └── study-guides/            # Architecture blueprints, W3C Gestures, K6 & CI/CD guides
+└── sdet_journey.md              # Living Engineering Logbook & Roadmap Milestones
 ```
 
 ---
 
-## 🧠 Key Design Patterns & Technical Highlights
+## 🎯 Key Architectural Pillars
 
-### 1. Multi-Storage Session Injection (Bypassing Login Forms)
-Before launching the browser page, Playwright's `addInitScript` injects the seeded API authentication state and dismisses popup flags globally in a single block. Since Angular Material reads state across multiple storages, we inject values into both `localStorage` and `sessionStorage` simultaneously:
+### 1. Web Hybrid Automation & Session State Injection (`sdet-web-playwright`)
+To eliminate slow and flaky UI login/setup routines, the framework leverages a **hybrid automation pattern**:
+- **Arrange:** Background API calls seed dynamic users, JWT tokens, carts, and addresses.
+- **Inject:** Playwright's `addInitScript` injects auth tokens and session cookies directly into browser storage (`localStorage` & `sessionStorage`).
+- **Act & Assert:** Browser navigates directly to target screens (e.g., checkout) with zero redundant UI interactions.
+- **Contract Integrity:** Runtime schema validation using **Zod** (`.extend()` patterns) guarantees backend API integrity before UI assertions run.
 
-```typescript
-async injectSessionToken(token: string, bid: string | number): Promise<void> {
-  await this.page.addInitScript(
-    ({ jwtToken, basketId }) => {
-      window.localStorage.setItem("token", jwtToken);
-      window.localStorage.setItem("bid", String(basketId));
-      window.sessionStorage.setItem("bid", String(basketId));
-      document.cookie = "welcomebanner_status=dismiss; path=/";
-      document.cookie = "cookieconsent_status=dismiss; path=/";
-    },
-    { jwtToken: token, basketId: bid }
-  );
-}
-```
+### 2. Native Mobile Engineering & W3C Pointer Actions (`sdet-mobile-appium`)
+- **Appium 2.x & UiAutomator2:** Native Android automation targeting high-performance accessibility IDs (`~selector`) and native `UiSelector` fallbacks.
+- **W3C Actions API (Hardware Fidelity):** Replaced legacy, deprecated `touchAction` with the standard W3C Pointer Actions API (`pointerType: 'touch'`). Simulates capacitive touchscreen physics: `move` ➔ `down` ➔ `pause(100)` ➔ `move` ➔ `up` ➔ `perform()`.
+- **Device-Agnostic Percentage Math:** All gesture coordinates in `Gestures.ts` are calculated dynamically via viewport bounds (`driver.getWindowRect()`), eliminating hardcoded pixel flakiness across phones, foldables, and tablets.
+- **Self-Healing Emulator Lifecycle (`onPrepare`):** The WDIO runner autonomously inspects connected hardware via `adb devices`. If inactive, it spawns the target AVD in detached background mode and continuously polls `sys.boot_completed == 1` before launching workers.
+- **Zero Flakiness / No Sleeps:** Eliminated `driver.pause()` anti-patterns in favor of explicit dynamic element polling (`waitForDisplayed()`), ensuring specs execute in under 6 seconds.
 
-### 2. Semantic & Resilient Accessibility Locators (A11y)
-Modern Material UIs dynamically change element accessibility names (ARIA labels) between steps (e.g., from `"Proceed to payment"` to `"Proceed to review"`). Rather than using fragile tag paths, we couple standard ARIA roles with visible text filtering to construct bulletproof selectors:
-
-```typescript
-// Resilient locator targeting the step button by its actual human-visible text
-this.continueButton = page.getByRole("button").filter({ hasText: "Continue" });
-```
-
-### 3. DRY Zod Contract Extensions
-Rather than duplicating fields between API payloads (POST request) and server responses (which append properties like `id`, `UserId`, `createdAt`), Zod's `.extend()` modifier is used to maintain schemas dynamically from a single source of truth:
-
-```typescript
-export const juiceCardSchema = juiceAddCardPayloadSchema.extend({
-  id: z.number().positive(),
-  UserId: z.number().positive(),
-  createdAt: dateStringSchema,
-  updatedAt: dateStringSchema,
-});
-```
+### 3. Performance Engineering Gates (`K6`)
+- Automated multi-stage stress and spike testing pipelines evaluating system saturation limits.
+- Enforces strict SLA thresholds (`p(95) < 1500ms`, error rates `< 5%`) running as quality gates inside CI/CD.
 
 ---
 
-## 🛠️ Local Setup & Execution
+## 🛠️ Quickstart & Execution
 
-### Prerequisites
-
-Ensure you have [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
-
-Clone the repository and install dependencies:
+### 1. Web Automation (`sdet-web-playwright`)
 ```bash
+cd sdet-web-playwright
+
+# Install dependencies
 npm install
-```
 
-Configure your environment variables inside a `.env` file in the root directory:
-```env
-API_URL=http://localhost:3000
-UI_URL=http://localhost:3000
-```
-
-### 🐳 Docker Container Control
-Manage the local **OWASP Juice Shop** container environment using simple npm scripts:
-```bash
-# Start the local Docker container (auto-pulls image if missing)
+# Start local test target via Docker
 npm run docker:start
 
-# View live container logs in real-time
-npm run docker:logs
-
-# Stop the container
-npm run docker:stop
-```
-
-### 🧪 Test Execution Dashboard
-
-Ensure the docker container is running, then choose your execution scope:
-
-```bash
-# Run the complete test suite (API, UI, and Hybrid E2E specs)
+# Run complete Web suite (UI, API & Hybrid)
 npm test
 
-# Run isolated API contract validation and mutation tests
+# Run isolated API contract validation
 npm run test:api
 
-# Run UI and Hybrid tests in Chromium
-npm run test:ui
-
-# Run cross-browser compatibility tests (Chromium, Firefox, WebKit) in parallel
-npm run test:ui:crossbrowser
-
-# Run visual execution mode (Playwright UI Runner)
-npm run test:ui:visual
-
-# View consolidated Playwright HTML report
-npm run report
+# Run K6 performance stress test
+npm run test:perf
 ```
 
-### 🧹 Code Quality (Linter)
-Validate code syntax and structural guidelines against our strict ESLint ruleset:
+### 2. Mobile Automation (`sdet-mobile-appium`)
 ```bash
-npm run lint
+cd sdet-mobile-appium
+
+# Install dependencies
+npm install
+
+# Run native E2E test suite (Auto-boots emulator if stopped)
+npm test
+
+# Run specific W3C gesture swipe spec
+npm run test:swipe
 ```
 
 ---
 
-## 📊 Live Reports & Dashboards
+## 📊 CI/CD Automation & Live Dashboards
 
-Every execution inside the CI/CD pipeline dynamically validates, consolidates, and publishes E2E and Performance reporting dashboards directly to GitHub Pages:
-*   🎭 **Playwright E2E HTML Report:** [E2E Reports Dashboard](https://raphaelcarvalho07.github.io/sdet-roadmap-playwright/)
-*   ⚡ **Grafana K6 Performance Report:** [Performance Metrics Dashboard](https://raphaelcarvalho07.github.io/sdet-roadmap-playwright/k6-report.html)
+All test suites run autonomously inside GitHub Actions with dependency caching, test parallelization, and consolidated artifact reporting deployed to GitHub Pages:
+
+* 🎭 **Playwright Web E2E Report:** [Live Web Dashboard](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/)
+* ⚡ **Grafana K6 Performance Report:** [Live K6 Metrics](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/k6-report.html)
 
 ---
 
-*This framework stands as a core milestone in the professional journey toward Software Development Engineer in Test (SDET), demonstrating modern software engineering applied to test automation.*
+## 📚 Technical Documentation & Knowledge Base
+
+Deep-dive architecture study guides are maintained in `/docs/study-guides`:
+- [Mobile Automation & W3C Pointer Actions](docs/study-guides/mobile-automation.md)
+- [Performance Engineering & K6 Integration](docs/study-guides/performance-engineering.md)
+- [CI/CD Pipelines & Merge Reports](docs/study-guides/ci-cd-pipelines.md)
+- [API Contract Validation with Zod](docs/study-guides/api-contract-validation.md)
+- [Page Object Model & Resilient Locators](docs/study-guides/pom-and-locators.md)
