@@ -67,7 +67,7 @@ class Gestures {
    * Swipes vertically upwards (scroll down page content).
    */
   static async swipeUp(): Promise<void> {
-    await this.swipe({ x: 0.5, y: 0.8 }, { x: 0.5, y: 0.2 });
+    await this.swipe({ x: 0.5, y: 0.8 }, { x: 0.5, y: 0.35 }, 400);
   }
 
   /**

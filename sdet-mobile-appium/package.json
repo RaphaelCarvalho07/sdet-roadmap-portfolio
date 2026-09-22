@@ -15,6 +15,9 @@
   "scripts": {
     "wdio": "wdio run ./wdio.conf.ts",
     "emulator:start": "android emulator start medium_phone",
-    "emulator:stop": "adb emu kill"
+    "emulator:stop": "adb emu kill",
+    "test": "wdio run ./wdio.conf.ts",
+    "test:swipe": "wdio run ./wdio.conf.ts --spec test/specs/swipe.spec.ts",
+    "test:login": "wdio run ./wdio.conf.ts --spec test/specs/test.e2e.ts"
   }
 }

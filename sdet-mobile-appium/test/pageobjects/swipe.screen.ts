@@ -1,5 +1,6 @@
 import { $ } from "@wdio/globals";
 import Screen from "./screen.js";
+import Gestures from "../helpers/gestures.js";
 
 class SwipeScreen extends Screen {
   // Bottom navigation tab
@@ -25,6 +26,10 @@ class SwipeScreen extends Screen {
     return $('android=new UiSelector().textContains("JS.FOUNDATION")');
   }
 
+  get hiddenText() {
+    return $('android=new UiSelector().text("You found me!!!")');
+  }
+
   async openSwipeScreen(): Promise<void> {
     await this.swipeTab.click();
     await this.waitForElement(this.swipeTitle);
@@ -47,6 +52,26 @@ class SwipeScreen extends Screen {
       timeout: 5000,
       timeoutMsg: "Third carousel card was not displayed after swiping",
     });
+  }
+
+  async scrollToHiddenText(maxScrolls: number = 5): Promise<void> {
+    let scrolls = 0;
+    while (!(await this.hiddenText.isDisplayed()) && scrolls < maxScrolls) {
+      if (scrolls === 0) {
+        // 1st scroll: Carousel is in lower viewport; swipe in upper safe zone
+        await Gestures.swipe({ x: 0.5, y: 0.35 }, { x: 0.5, y: 0.05 }, 400);
+      } else {
+        // Subsequent scrolls: Carousel moved to top; swipe in lower safe zone
+        await Gestures.swipe({ x: 0.5, y: 0.8 }, { x: 0.5, y: 0.35 }, 400);
+      }
+      scrolls++;
+    }
+
+    if (!(await this.hiddenText.isDisplayed())) {
+      throw new Error(
+        `Element was not found after ${maxScrolls} scroll attempts.`,
+      );
+    }
   }
 }
 

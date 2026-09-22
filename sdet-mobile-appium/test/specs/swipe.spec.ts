@@ -2,7 +2,7 @@ import { expect } from "@wdio/globals";
 import SwipeScreen from "../pageobjects/swipe.screen.js";
 import Gestures from "../helpers/gestures.js";
 
-describe("Mobile Gestures - Carousel Horizontal Swipe", () => {
+describe("Mobile Gestures - Horizontal & Vertical Swipe Suite", () => {
   before(async () => {
     await SwipeScreen.openSwipeScreen();
   });
@@ -22,5 +22,11 @@ describe("Mobile Gestures - Carousel Horizontal Swipe", () => {
 
     const isThirdVisible = await SwipeScreen.isThirdCardVisible();
     expect(isThirdVisible).toBe(true);
+  });
+
+  it("should scroll vertically to find hidden element", async () => {
+    await SwipeScreen.scrollToHiddenText();
+    await expect(SwipeScreen.hiddenText).toBeDisplayed();
+    await expect(SwipeScreen.hiddenText).toHaveText("You found me!!!");
   });
 });
