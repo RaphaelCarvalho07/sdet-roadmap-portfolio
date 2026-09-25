@@ -44,7 +44,9 @@ jobs:
 
       - name: 📦 Install Mobile Project Dependencies
         working-directory: sdet-mobile-appium
-        run: npm ci || npm install
+        run: |
+          npm ci || npm install
+          npx appium driver install uiautomator2
 
       - name: 🚀 Run Tests on Headless Android Emulator
         uses: reactivecircus/android-emulator-runner@v2

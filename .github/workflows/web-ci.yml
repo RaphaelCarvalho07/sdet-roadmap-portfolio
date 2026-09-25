@@ -1,4 +1,4 @@
-name: 🔄 SDET CI Pipeline
+name: 🌐 Hybrid (Web & API) CI Pipeline
 
 on:
   push:
@@ -12,7 +12,6 @@ permissions:
 defaults:
   run:
     working-directory: sdet-web-playwright
-
 
 jobs:
   lint:
@@ -221,4 +220,3 @@ jobs:
           echo "### 📊 Automation Reports Dashboard is Live!" >> $GITHUB_STEP_SUMMARY
           echo "👉 [Click here to view the E2E HTML Report](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/)" >> $GITHUB_STEP_SUMMARY
           echo "⚡ [Click here to view the K6 Performance Report](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/k6-report.html)" >> $GITHUB_STEP_SUMMARY
-
