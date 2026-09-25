@@ -13,6 +13,9 @@ on:
       - ".github/workflows/mobile-ci.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write # Required for peaceiris/actions-gh-pages to push to gh-pages branch
+
 jobs:
   android-e2e:
     name: 🤖 Android E2E Tests (Headless Emulator)
@@ -59,10 +62,22 @@ jobs:
           working-directory: sdet-mobile-appium
           script: npm test
 
-      - name: 📊 Upload Test Results
+      - name: 📊 Generate Allure Report
         if: always()
-        uses: actions/upload-artifact@v4
+        working-directory: sdet-mobile-appium
+        run: npm run report:generate
+
+      - name: 🚀 Deploy Mobile Allure Report to GitHub Pages
+        if: always() && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: appium-reports
-          path: sdet-mobile-appium/reports/
-          retention-days: 7
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: sdet-mobile-appium/allure-report
+          destination_dir: mobile-report
+          keep_files: true
+
+      - name: 📈 Publish Run Summary
+        if: always()
+        run: |
+          echo "### 📱 Mobile Test Execution Completed!" >> $GITHUB_STEP_SUMMARY
+          echo "👉 [Click here to view Mobile Allure Report](https://raphaelcarvalho07.github.io/sdet-roadmap-portfolio/mobile-report/)" >> $GITHUB_STEP_SUMMARY
