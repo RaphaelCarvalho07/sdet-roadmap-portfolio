@@ -318,6 +318,7 @@ async scrollToHiddenText(maxScrolls: number = 5): Promise<void> {
 In cross-platform mobile architectures (e.g., React Native) and native apps, layouts frequently nest horizontal touch containers (such as a paginated Carousel / `HorizontalScrollView` / `FlatList`) inside an outer vertical `ScrollView`.
 
 When automating touch gestures via the W3C Actions API:
+
 - **Touch Event Interception:** If a vertical swipe (`pointerDown -> pointerMove -> pointerUp`) initiates inside the bounding box of a horizontal component with snapping behavior, the child component's gesture listener intercepts the touch event.
 - **Inertia Reset (Snap-Back):** A vertical drag across a snapping horizontal carousel is interpreted as an invalid or canceled horizontal pan, causing the carousel to reset its scroll offset and snap back to Card 1.
 - **Dynamic Shifting Viewports:** Static percentage coordinates (e.g., swiping from `y: 0.40` to `y: 0.10`) may work on the first gesture, but as the screen scrolls, components shift physically in the viewport. On subsequent iterations, those same static coordinates can land directly inside the child component.
@@ -368,6 +369,7 @@ Unlike modern web test runners (Playwright) which can spin up multiple isolated 
 By default, WebdriverIO with `logLevel: "info"` logs every raw JSON-RPC command (`POST /element`, polling retries, coordinates), creating overwhelming noise in terminal output.
 
 To achieve clean, production-grade test reporting:
+
 - Set `logLevel: "warn"` in `wdio.conf.ts` to surface only runner lifecycle events, warnings, and failure stack traces.
 - Redirect low-level Appium server diagnostics to a persistent log file (`appium.log`) via `@wdio/appium-service` arguments:
 
@@ -397,6 +399,7 @@ To inspect elements, retrieve selectors, and test locators in real-time, SDETs u
 [Appium Inspector](https://github.com/appium/appium-inspector) is the official, universal visual inspection tool for Appium. It is available as a cross-platform desktop application (macOS/Windows/Linux) or as a browser-based client at [inspector.appiumpro.com](https://inspector.appiumpro.com/).
 
 #### Step-by-Step Workflow:
+
 1. **Start Local Appium Server:** Ensure your Appium server is running in a terminal:
    ```bash
    appium --port 4723
@@ -432,6 +435,7 @@ Shipped natively within the Android SDK, `uiautomatorviewer` is a lightweight al
 # Launch from Android SDK command-line tools
 $ANDROID_HOME/cmdline-tools/latest/bin/uiautomatorviewer
 ```
+
 - Click the **Device Screenshot** button in the top-left toolbar.
 - Hover over elements to inspect raw node attributes (`bounds`, `package`, `class`, `clickable`, `scrollable`).
 
@@ -478,6 +482,7 @@ npm install --save-dev \
 ```
 
 #### Why Each Package Exists:
+
 - `@wdio/cli`: Command-line test orchestrator (`npx wdio run`).
 - `@wdio/local-runner`: Process spawner for parallel worker processes.
 - `@wdio/mocha-framework`: BDD syntax adapter (`describe`, `it`, `before`).
@@ -558,11 +563,21 @@ import { $ } from "@wdio/globals";
 
 class LoginScreen {
   // Accessibility locators (~ prefix)
-  get loginTab() { return $("~Login"); }
-  get emailInput() { return $("~input-email"); }
-  get passwordInput() { return $("~input-password"); }
-  get loginButton() { return $("~button-LOGIN"); }
-  get successAlert() { return $('android=new UiSelector().text("Success")'); }
+  get loginTab() {
+    return $("~Login");
+  }
+  get emailInput() {
+    return $("~input-email");
+  }
+  get passwordInput() {
+    return $("~input-password");
+  }
+  get loginButton() {
+    return $("~button-LOGIN");
+  }
+  get successAlert() {
+    return $('android=new UiSelector().text("Success")');
+  }
 
   async navigateToLogin(): Promise<void> {
     await this.loginTab.click();
@@ -595,6 +610,85 @@ describe("Mobile Automation From Scratch", () => {
 ```
 
 Run test suite:
+
 ```bash
 npx wdio run ./wdio.conf.ts
+```
+
+---
+
+## 15. Mobile CI/CD: Headless Android Emulation on GitHub Actions
+
+Running mobile tests in continuous integration pipelines requires infrastructure decisions fundamentally different from web automation. The primary bottleneck is the compute overhead required to boot and run an Android emulator with hardware acceleration.
+
+### 15.1 The macOS Runner Fallacy (`macos-13` vs `ubuntu-latest`)
+
+Historically, community tutorials recommended macOS runners (`macos-13`) for Android testing because Apple's `Hypervisor.framework` was enabled by default on Intel instances.
+
+**Current Industry Landscape:**
+
+1. **`macos-13` Deprecation:** GitHub has officially retired and decommissioned Intel `macos-13` runner images. Submitting a workflow targeting `macos-13` results in the job sitting in a perpetual `Queued` state for up to 24 hours before being terminated.
+2. **`macos-latest` (Apple Silicon - ARM64):** Modern macOS runners operate on M-series chips. Nested virtualization for standard x86 Android emulators is unstable on these public runners, and macOS compute minutes cost up to 10x more than Linux minutes.
+3. **`ubuntu-latest` with KVM (The Engineering Standard):** GitHub Actions Linux runners provide access to **KVM (Kernel-based Virtual Machine)**. With direct CPU hardware virtualization exposed, a headless Android emulator boots in 60 to 90 seconds with zero licensing overhead.
+
+### 15.2 What is KVM?
+
+> **KVM (Kernel-based Virtual Machine)** is a full virtualization module built directly into the Linux kernel. It turns the Linux kernel into a Type-1 hypervisor. This allows the host CPU to expose its hardware virtualization extensions (Intel VT-x or AMD-V) directly to the guest virtual machine (the Android emulator), eliminating the massive performance penalty of pure software emulation.
+
+### 15.3 Deterministic GitHub Actions Configuration
+
+To enable KVM and execute tests via WebdriverIO and Appium, the workflow must set up the `udev` rule for `/dev/kvm` prior to invoking the emulator runner action:
+
+```yaml
+jobs:
+  android-e2e:
+    name: 🤖 Android E2E Tests (Headless Emulator)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: 📁 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚡ Enable KVM Hardware Acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: sdet-mobile-appium/package-lock.json
+
+      - name: 📦 Install Mobile Project Dependencies
+        working-directory: sdet-mobile-appium
+        run: npm ci
+
+      - name: 🚀 Run Tests on Headless Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect
+          working-directory: sdet-mobile-appium
+          script: npm test
+
+      - name: 📊 Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-reports
+          path: sdet-mobile-appium/reports/
+          retention-days: 7
 ```

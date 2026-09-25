@@ -862,3 +862,39 @@ We systematically resolved these challenges through architectural refactoring ac
 - **Headless Mobile CI Pipeline (GitHub Actions):** Build an automated CI workflow that provisions an Android emulator headless (`-no-window -no-audio -gpu swiftshader_indirect`) and executes the full mobile test suite on pull requests.
 - **Root-Cause Performance Engineering (k6 + Server Telemetry):** Stress testing with correlation metrics (CPU, RAM, latency percentiles under load).
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using Promptfoo/DeepEval, and Model Context Protocol (MCP) testing.
+
+---
+
+## 24/09/2026 - Debugging 24h CI Queues, macOS Deprecation & Linux KVM Hardware Acceleration
+
+### 🎯 1. Daily Objective
+
+- Set up a robust, headless CI/CD pipeline on GitHub Actions to execute mobile E2E tests (Android) using WebdriverIO and Appium.
+- Investigate and resolve an infrastructure blocker where the workflow remained trapped in a 24-hour queued state.
+
+### 🛠️ 2. What Was Done & Challenges Faced
+
+- **24-Hour Queue Hang Root Cause Analysis:**
+  - Diagnosed workflow run `35757016637`, which was queued for exactly 24 hours without executing a single step.
+  - Root cause: The workflow was configured with `runs-on: macos-13`. GitHub officially deprecated and decommissioned the `macos-13` (Intel) image, leaving zero runners available in the public pool.
+  - Evaluated `macos-latest`: Discarded due to public Apple Silicon (ARM64) runners lacking reliable nested virtualization for x86 emulator images, alongside a 10x billing minute multiplier.
+- **Migration to Linux with Hardware KVM Acceleration:**
+  - Migrated runner to `runs-on: ubuntu-latest`.
+  - Added a `udev` permission rule to grant access to `/dev/kvm` (Kernel-based Virtual Machine).
+  - Orchestrated `reactivecircus/android-emulator-runner@v2` targeting Pixel 6 on Android 11 (API 30, `x86_64`) with headless flags (`-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect`).
+- **Capability Decoupling:**
+  - Commented out `"appium:platformVersion": "16"` in `wdio.conf.ts` to allow dynamic matching against the CI emulator's OS version while preserving `"appium:deviceName": "medium_phone"`.
+
+### 💡 3. Key Takeaways & Next Steps
+
+- **Linux KVM is the Modern Standard:** Free, deterministic Android CI in public runners should always target `ubuntu-latest` with KVM rather than legacy macOS hacks.
+- **Decoupled Capabilities:** Framework capabilities should not hardcode OS version strings that break parity across local emulators and CI runners.
+- **Next Steps:**
+  - Push the updated pipeline configuration and verify clean execution in GitHub Actions.
+  - Configure artifact retention for test reports and Appium failure logs.
+
+### 3. Next Study Steps
+
+- **Test Observability & Distributed Telemetry:** Implement correlation IDs (`x-request-id`/`traceparent`), structured JSON logging...
+- **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using Promptfoo/DeepEval...
+- **Root-Cause Performance Engineering (k6 + Server Telemetry):** Design high-concurrency stress scenarios using k6...
