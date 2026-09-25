@@ -1,0 +1,5 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","103","should display the first card initially and NOT the third card","Mobile Gestures - Horizontal & Vertical Swipe Suite","2026-09-25","passed","2026-09-25","","","",""
+"","7958","should navigate to login tab and submit valid credentials using Page Objects","WDIO Native Demo App - Login Flow","2026-09-25","passed","2026-09-25","","","",""
+"","5648","should scroll vertically to find hidden element","Mobile Gestures - Horizontal & Vertical Swipe Suite","2026-09-25","passed","2026-09-25","","","",""
+"","4638","should swipe left and reveal the subsequent cards","Mobile Gestures - Horizontal & Vertical Swipe Suite","2026-09-25","passed","2026-09-25","","","",""
