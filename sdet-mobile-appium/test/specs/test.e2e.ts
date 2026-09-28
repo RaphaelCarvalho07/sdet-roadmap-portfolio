@@ -1,6 +1,6 @@
 import { expect } from "@wdio/globals";
-import LoginScreen from "../pageobjects/login.screen.js";
-import DialogScreen from "../pageobjects/dialog.screen.js";
+import LoginScreen from "../screenobjects/login.screen.js";
+import DialogScreen from "../screenobjects/dialog.screen.js";
 
 describe("WDIO Native Demo App - Login Flow", () => {
   it("should navigate to login tab and submit valid credentials using Page Objects", async () => {

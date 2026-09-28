@@ -9,7 +9,7 @@ class SwipeScreen extends Screen {
   }
 
   // Title / header of the swipe screen
-  private get swipeTitle() {
+  get swipeTitle() {
     return $('android=new UiSelector().text("Swipe horizontal")');
   }
 

@@ -1,5 +1,5 @@
 import { expect } from "@wdio/globals";
-import SwipeScreen from "../pageobjects/swipe.screen.js";
+import SwipeScreen from "../screenobjects/swipe.screen.js";
 import Gestures from "../helpers/gestures.js";
 
 describe("Mobile Gestures - Horizontal & Vertical Swipe Suite", () => {
