@@ -885,16 +885,36 @@ We systematically resolved these challenges through architectural refactoring ac
 - **Capability Decoupling:**
   - Commented out `"appium:platformVersion": "16"` in `wdio.conf.ts` to allow dynamic matching against the CI emulator's OS version while preserving `"appium:deviceName": "medium_phone"`.
 
-### 💡 3. Key Takeaways & Next Steps
-
-- **Linux KVM is the Modern Standard:** Free, deterministic Android CI in public runners should always target `ubuntu-latest` with KVM rather than legacy macOS hacks.
-- **Decoupled Capabilities:** Framework capabilities should not hardcode OS version strings that break parity across local emulators and CI runners.
-- **Next Steps:**
-  - Push the updated pipeline configuration and verify clean execution in GitHub Actions.
-  - Configure artifact retention for test reports and Appium failure logs.
-
 ### 3. Next Study Steps
 
 - **Test Observability & Distributed Telemetry:** Implement correlation IDs (`x-request-id`/`traceparent`), structured JSON logging...
 - **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using Promptfoo/DeepEval...
 - **Root-Cause Performance Engineering (k6 + Server Telemetry):** Design high-concurrency stress scenarios using k6...
+
+---
+
+## 28/09/2026 - Hybrid Context Switching (WebViews) & Deep Linking Architecture
+
+### 🎯 1. Daily Objective
+
+- Implement end-to-end support for hybrid mobile testing, handling dynamic context transitions between native Android widgets (`NATIVE_APP`) and embedded web browsers (`WEBVIEW`).
+- Eliminate UI traversal overhead across test suites by implementing direct Android Intent dispatching via Deep Linking.
+
+### 🛠️ 2. What Was Done & Challenges Faced
+
+- **Hybrid Screen Object Model (`WebviewScreen`):**
+  - Architected `WebviewScreen.ts` with strict separation between native Android locators (`android.webkit.WebView`) and embedded web DOM selectors (`h1`, `.hero__subtitle`).
+  - Implemented dynamic polling with `driver.waitUntil` to prevent race conditions during ChromeDriver proxy initialization when switching to `WEBVIEW_com.wdiodemoapp`.
+  - Enforced bidirectional context safety: guaranteed restoration to `NATIVE_APP` after web assertion steps.
+- **Deep Linking Optimization:**
+  - Implemented `openDeepLink(route)` using `driver.execute('mobile: deepLink', ...)` targeting the `wdio://` URL scheme.
+  - Verified instant screen transitions directly to Login and Swipe views, bypassing the native bottom navigation bar.
+- **Debugging & Syntax Refactoring:**
+  - Diagnosed `WebDriverError: 'android.webkit.WebView' is not a string`: resolved Java parsing conflict where single quotes `'` in `UiSelector` represent `char` instead of `String`. Replaced with idiomatic WebdriverIO class selector `$("android.webkit.WebView")`.
+  - Refactored `SwipeScreen` to expose public getters, preserving WDIO's built-in auto-retry assertion polling without leaking raw selectors into the test spec.
+
+### 3. Next Study Steps
+
+- **Test Observability & Distributed Telemetry:** Implement correlation IDs (`x-request-id`/`traceparent`), structured JSON logging, and test execution metrics to link automated test runs (Web & Mobile) with enterprise APM/backend observability stacks (OpenTelemetry, Datadog/Grafana).
+- **LLM & AI Agent Evaluation (Evals & MCP):** Introduce non-deterministic testing principles, LLM-as-a-Judge evaluations using Promptfoo/DeepEval, semantic assertion benchmarks, and Model Context Protocol (MCP) tool-call verification.
+- **Root-Cause Performance Engineering (k6 + Server Telemetry):** Design high-concurrency stress scenarios using k6, correlating latency degradation percentiles (p95/p99) with server-side resource saturation (CPU, memory leaks, event loop lag).

@@ -692,3 +692,48 @@ jobs:
           path: sdet-mobile-appium/reports/
           retention-days: 7
 ```
+
+---
+
+## 16. Hybrid Applications: Context Switching & Deep Linking Architecture
+
+Modern mobile applications frequently combine native components (`android.widget.*` / `XCUIElementType*`) with embedded web views (`android.webkit.WebView` / `WKWebView`) to render web-based checkouts, terms of service, or dynamic web portals.
+
+### 16.1 The Context Isolation Problem
+
+Appium's native automation driver (`UiAutomator2`) views an embedded web view as an opaque black box (`android.webkit.WebView`). It cannot traverse the internal DOM nodes of the web page using native accessibility locators.
+
+To interact with the embedded web DOM:
+
+1. **Discover Contexts:** Retrieve all active execution contexts registered by the Appium server via `driver.getContexts()`. Typical outputs: `['NATIVE_APP', 'WEBVIEW_com.wdiodemoapp']`.
+2. **Dynamic Polling Wait:** Spawning the underlying `chromedriver` proxy takes 1–3 seconds. Calling `driver.switchContext()` synchronously causes `NoSuchContextException`. Always poll until the context matches `/WEBVIEW/`:
+   ```typescript
+   await driver.waitUntil(
+     async () => {
+       const contexts = (await driver.getContexts()) as string[];
+       return contexts.some((ctx) => /WEBVIEW/.test(ctx));
+     },
+     { timeout: 20000, timeoutMsg: "WebView context not available" },
+   );
+   ```
+3. **DOM Manipulation:** Once switched to `WEBVIEW`, standard web selectors (`$("h1")`, `$(".hero__subtitle")`) and browser APIs (`driver.getTitle()`, `driver.getUrl()`) function identically to standard web automation.
+4. **Mandatory State Restoration:** Tests must explicitly switch back to `NATIVE_APP` (`await driver.switchContext('NATIVE_APP')`). Forgetting to restore the native context causes subsequent tests in the suite to fail when looking for native elements.
+
+### 16.2 Deep Linking (`mobile: deepLink`)
+
+Traditional UI test automation requires traversing multiple screens (tapping tabs, headers, and buttons) to reach the target view under test. This adds significant execution overhead and introduces flakiness.
+
+**The Engineering Solution:**
+By triggering direct OS Intents via Appium's `mobile: deepLink` extension, tests can bypass UI traversal and instantiate target activities in milliseconds:
+
+```typescript
+await driver.execute("mobile: deepLink", {
+  url: "wdio://login",
+  package: "com.wdiodemoapp",
+});
+```
+
+Benefits:
+
+- **Speed:** Reduces setup time for deep-screen tests from ~10 seconds to < 500ms.
+- **Resilience:** Decouples screen testing from upstream navigation failures or header/tab regressions.
